@@ -3,6 +3,57 @@ var $ = require("jquery");
 var React = require('react');
 var ReactDOM = require('react-dom');
 
+var Comment = React.createClass({
+	render: function(){
+		return (
+			<div>{this.props.data.comment}</div>
+		);
+	}
+});
+
+var CommentList = React.createClass({
+	getInitialState: function(){
+		return {
+			comments: [],
+		};
+	},
+	render: function(){
+
+		var allComments = [];
+
+		this.props.comments.map(function(com){
+			allComments.push(<Comment data={com} key={com.id} />)			
+		});
+
+		return (
+			<div className="commentList">
+				{allComments}
+				{allComments}
+			</div>
+		);
+	}
+});
+
+var Discussion = React.createClass({
+	getInitialState: function(){
+		return {
+			showComments: false,
+			showAuthorDetails: false
+		};
+	},
+	showDetails: function(){
+		 this.setState({ showComments: !this.state.showComments });
+	},
+	render: function(){
+		return (
+	        <section onClick={this.showDetails}>
+	        	<h1>{this.props.topic.title}</h1>
+	        	{ this.state.showComments ? <CommentList comments={this.props.topic.comments} /> : null }
+	        </section>
+	      );
+	}
+});
+
 var CommentArea = React.createClass({
 	getInitialState: function(){
 		return {topics:[]};
@@ -16,7 +67,6 @@ var CommentArea = React.createClass({
 		}.bind(this));
 	},
 	render: function(){
-
 		var discussions = [];
 		this.state.topics.forEach(function(top){
 			discussions.push(<Discussion topic={top.discussion} key={top.discussion.id}/>);
@@ -28,24 +78,12 @@ var CommentArea = React.createClass({
 	}
 });
 
-var Discussion = React.createClass({
-	getInitialState: function(){
-		return {discussions:[]};
-	},
-	render: function(){
-		console.log(this.props.topic);
-		return (
-	        <div>{this.props.topic.title}</div>
-	      );
-	}
-});
-
 
 var Main = React.createClass({
 	render: function(){
 		return (
 			<div>
-				<h1>Hello, world!</h1>
+				<h1>Today's Topics</h1>
 				<CommentArea url={"../comments.json"} />
 			</div>
 		);

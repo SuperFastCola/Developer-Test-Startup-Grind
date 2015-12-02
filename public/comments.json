@@ -116,4 +116,16 @@
             }
         ]
     }
-}]
+},
+{
+    "discussion": {
+        "id": 2,
+        "title": "German Expressionism",
+        "discussion": "Otto Dix or Max Beckmann?",
+        "author": "Wayne",
+        "author_id": 10,
+        "datetime": "2015-01-23T18:25:43.511Z",
+        "comments": []
+    }
+}
+]

@@ -49,6 +49,69 @@
 	var React = __webpack_require__(2);
 	var ReactDOM = __webpack_require__(159);
 
+	var Comment = React.createClass({
+		displayName: 'Comment',
+
+		render: function () {
+			return React.createElement(
+				'div',
+				null,
+				this.props.data.comment
+			);
+		}
+	});
+
+	var CommentList = React.createClass({
+		displayName: 'CommentList',
+
+		getInitialState: function () {
+			return {
+				comments: []
+			};
+		},
+		render: function () {
+
+			var allComments = [];
+
+			this.props.comments.map(function (com) {
+				allComments.push(React.createElement(Comment, { data: com, key: com.id }));
+			});
+
+			return React.createElement(
+				'div',
+				{ className: 'commentList' },
+				allComments,
+				allComments
+			);
+		}
+	});
+
+	var Discussion = React.createClass({
+		displayName: 'Discussion',
+
+		getInitialState: function () {
+			return {
+				showComments: false,
+				showAuthorDetails: false
+			};
+		},
+		showDetails: function () {
+			this.setState({ showComments: !this.state.showComments });
+		},
+		render: function () {
+			return React.createElement(
+				'section',
+				{ onClick: this.showDetails },
+				React.createElement(
+					'h1',
+					null,
+					this.props.topic.title
+				),
+				this.state.showComments ? React.createElement(CommentList, { comments: this.props.topic.comments }) : null
+			);
+		}
+	});
+
 	var CommentArea = React.createClass({
 		displayName: 'CommentArea',
 
@@ -64,7 +127,6 @@
 			}).bind(this));
 		},
 		render: function () {
-
 			var discussions = [];
 			this.state.topics.forEach(function (top) {
 				discussions.push(React.createElement(Discussion, { topic: top.discussion, key: top.discussion.id }));
@@ -74,22 +136,6 @@
 				'div',
 				{ className: 'commentArea' },
 				discussions
-			);
-		}
-	});
-
-	var Discussion = React.createClass({
-		displayName: 'Discussion',
-
-		getInitialState: function () {
-			return { discussions: [] };
-		},
-		render: function () {
-			console.log(this.props.topic);
-			return React.createElement(
-				'div',
-				null,
-				this.props.topic.title
 			);
 		}
 	});
@@ -104,7 +150,7 @@
 				React.createElement(
 					'h1',
 					null,
-					'Hello, world!'
+					'Today\'s Topics'
 				),
 				React.createElement(CommentArea, { url: "../comments.json" })
 			);
