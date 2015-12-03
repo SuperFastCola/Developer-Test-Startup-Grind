@@ -60,9 +60,41 @@
 				null,
 				React.createElement(
 					'span',
-					null,
+					{ className: 'author-name' },
 					this.props.data.author
 				)
+			);
+		}
+	});
+
+	var CommentDate = React.createClass({
+		displayName: 'CommentDate',
+
+		render: function () {
+
+			var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+			var commentDate = new Date(this.props.datetime);
+
+			var usHour = commentDate.getHours();
+			var timeOfDay = "AM";
+
+			if (usHour > 12) {
+				usHour -= 12;
+				timeOfDay = "PM";
+			}
+
+			var minutes = commentDate.getMinutes();
+
+			if (String(minutes).length == 1) {
+				minutes = String("0" + minutes);
+			}
+
+			commentDate = months[commentDate.getMonth()] + " " + commentDate.getDate() + ", " + commentDate.getFullYear() + " - " + usHour + ":" + minutes + timeOfDay;
+
+			return React.createElement(
+				'div',
+				{ className: 'commentDate' },
+				commentDate
 			);
 		}
 	});
@@ -77,11 +109,19 @@
 			return { __html: rawMarkup };
 		},
 		render: function () {
+
+			var replies = null;
+			if (typeof this.props.data.comments != "undefined" && this.props.data.comments.length > 0) {
+				replies = React.createElement(RepliesList, { comments: this.props.data.comments });
+			}
+
 			return React.createElement(
 				'div',
-				null,
+				{ className: 'comment' },
 				React.createElement(Author, { data: this.props.data }),
-				React.createElement('div', { dangerouslySetInnerHTML: this.parseMarkup(this.props.data.comment) })
+				React.createElement(CommentDate, { datetime: this.props.data.datetime }),
+				React.createElement('div', { dangerouslySetInnerHTML: this.parseMarkup(this.props.data.comment) }),
+				replies
 			);
 		}
 	});
@@ -94,20 +134,46 @@
 				comments: []
 			};
 		},
+		handleCommentClick: function (i) {
+			console.log(this.state.comments[i]);
+		},
 		componentWillMount: function () {
 			var allComments = [];
+
 			this.props.comments.map((function (com) {
-				allComments.push(React.createElement(Comment, { data: com, key: com.id }));
-				//{test: this.state.test.concat([<Comment data={com} key={com.id} />])});
+				allComments.push(React.createElement(
+					'div',
+					{ key: com.id, onClick: this.handleCommentClick.bind(this, com.id) },
+					React.createElement(Comment, { data: com })
+				));
 			}).bind(this));
 
 			this.setState({ comments: allComments });
 		},
 		render: function () {
+
 			return React.createElement(
 				'div',
-				{ className: 'commentList' },
+				{ className: 'commentsList' },
 				this.state.comments
+			);
+		}
+	});
+
+	var RepliesList = React.createClass({
+		displayName: 'RepliesList',
+
+		render: function () {
+
+			var allReplies = [];
+			this.props.comments.map(function (com) {
+				allReplies.push(React.createElement(Comment, { data: com, key: com.id }));
+			});
+
+			return React.createElement(
+				'div',
+				{ className: 'commentsReply' },
+				allReplies
 			);
 		}
 	});
@@ -127,7 +193,12 @@
 		render: function () {
 			return React.createElement(
 				'section',
-				{ onClick: this.showDetails },
+				null,
+				React.createElement(
+					'button',
+					{ onClick: this.showDetails },
+					'SHow'
+				),
 				React.createElement(
 					'h1',
 					null,

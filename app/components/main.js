@@ -9,11 +9,41 @@ var Author = React.createClass({
 	render: function(){
 		return (
 			<div>
-				<span>{this.props.data.author}</span>
+				<span className="author-name">{this.props.data.author}</span>
 			</div>
 		);
 	}
 });
+
+var CommentDate = React.createClass({
+	render: function(){
+
+		var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+		var commentDate = new Date(this.props.datetime);
+
+		var usHour = commentDate.getHours();
+		var timeOfDay = "AM";
+
+		if(usHour>12){
+			usHour-=12;
+			timeOfDay = "PM";
+		}
+
+		var minutes = commentDate.getMinutes();
+
+		if(String(minutes).length==1){
+			minutes = String("0" + minutes);
+		}
+
+		commentDate = months[commentDate.getMonth()] + 
+			" " + commentDate.getDate() + ", " + commentDate.getFullYear() + 
+			" - " + usHour + ":" + minutes + timeOfDay;
+
+		return (
+			<div className="commentDate">{commentDate}</div>
+		);
+	}
+})
 
 var Comment = React.createClass({
 	parseMarkup: function(item) {
@@ -23,10 +53,18 @@ var Comment = React.createClass({
     	return { __html: rawMarkup };
   	},
 	render: function(){
+
+		var replies = null;
+		if(typeof this.props.data.comments != "undefined" && this.props.data.comments.length>0){
+			replies = <RepliesList comments={this.props.data.comments} />			
+		}
+
 		return (
-			<div>
+			<div className="comment">
 				<Author data={this.props.data} /> 
+				<CommentDate datetime={this.props.data.datetime} />
 				<div dangerouslySetInnerHTML={this.parseMarkup(this.props.data.comment)} />
+				{replies}
 			</div>
 		);
 	}
@@ -35,22 +73,42 @@ var Comment = React.createClass({
 var CommentList = React.createClass({
 	getInitialState: function(){
 		return {
-			comments: [],
+			comments: []
 		};
+	},
+	handleCommentClick: function(i){
+		console.log(this.state.comments[i]);
 	},
 	componentWillMount: function(){
 		var allComments = [];
+
 		this.props.comments.map(function(com){
-			allComments.push(<Comment data={com} key={com.id} />)			
-				//{test: this.state.test.concat([<Comment data={com} key={com.id} />])});
+			allComments.push(<div key={com.id} onClick={this.handleCommentClick.bind(this,com.id)}><Comment data={com} /></div>)			
 		}.bind(this));
 
 		this.setState({comments:allComments});
 	},
 	render: function(){
+
 		return (
-			<div className="commentList">
+			<div className="commentsList">
 				{this.state.comments}
+			</div>
+		);
+	}
+});
+
+var RepliesList = React.createClass({
+	render: function(){
+		
+		var allReplies = [];
+		this.props.comments.map(function(com){
+			allReplies.push(<Comment data={com} key={com.id} />)			
+		});
+
+		return (
+			<div className="commentsReply">
+				{allReplies}
 			</div>
 		);
 	}
@@ -68,7 +126,8 @@ var Discussion = React.createClass({
 	},
 	render: function(){
 		return (
-	        <section onClick={this.showDetails}>
+	        <section>
+	        	<button onClick={this.showDetails} >SHow</button>
 	        	<h1>{this.props.topic.title}</h1>
 	        	{ this.state.showComments ? <CommentList comments={this.props.topic.comments} /> : null }
 	        </section>

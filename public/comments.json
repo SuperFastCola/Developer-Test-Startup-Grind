@@ -22,7 +22,7 @@
                         "author_id": 3,
                         "datetime": "2015-01-24T10:15:03.511Z",
                         "comment": "I think this gets it right much more than other answers, but UX could also include other customer touchpoints I think. Where do those go here? I also disagree with how you've placed the HCI circle... anyone who works in HCI would disagree with that definition (e.g., that it ignores human factors, sound design, visual design, or even IA...)",
-                        "public": true,
+                        "public": false,
                         "deleted": false
                     },
                     {
