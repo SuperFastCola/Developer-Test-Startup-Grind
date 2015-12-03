@@ -134,18 +134,20 @@
 				comments: []
 			};
 		},
-		handleCommentClick: function (i) {
-			console.log(this.state.comments[i]);
+		handleCommentClick: function (e, i) {
+			console.log(e);
+			console.log(i);
 		},
 		componentWillMount: function () {
 			var allComments = [];
-
+			var index = 0;
 			this.props.comments.map((function (com) {
 				allComments.push(React.createElement(
 					'div',
-					{ key: com.id, onClick: this.handleCommentClick.bind(this, com.id) },
+					{ key: com.id, onClick: this.handleCommentClick.bind(this, index) },
 					React.createElement(Comment, { data: com })
 				));
+				index++;
 			}).bind(this));
 
 			this.setState({ comments: allComments });

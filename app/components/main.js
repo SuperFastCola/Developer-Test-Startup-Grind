@@ -76,14 +76,16 @@ var CommentList = React.createClass({
 			comments: []
 		};
 	},
-	handleCommentClick: function(i){
-		console.log(this.state.comments[i]);
+	handleCommentClick: function(e,i){
+		console.log(e);
+		console.log(i);
 	},
 	componentWillMount: function(){
 		var allComments = [];
-
+		var index = 0;
 		this.props.comments.map(function(com){
-			allComments.push(<div key={com.id} onClick={this.handleCommentClick.bind(this,com.id)}><Comment data={com} /></div>)			
+			allComments.push(<div key={com.id} onClick={this.handleCommentClick.bind(this,index)}><Comment data={com} /></div>)
+			index++;			
 		}.bind(this));
 
 		this.setState({comments:allComments});
