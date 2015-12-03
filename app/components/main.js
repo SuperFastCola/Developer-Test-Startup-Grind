@@ -5,6 +5,7 @@ var Animate = require('animateCSS');
 var ReactDOM = require('react-dom');
 var marked = require('marked');
 
+//render author profile
 var Author = React.createClass({
 	render: function(){
 		return (
@@ -15,6 +16,7 @@ var Author = React.createClass({
 	}
 });
 
+//render comment date for United States.
 var CommentDate = React.createClass({
 	render: function(){
 
@@ -45,11 +47,31 @@ var CommentDate = React.createClass({
 	}
 })
 
+//dpost deletion confirmation
+var Confirmation = React.createClass({
+	handleDelete: function(e){
+		e.stopPropagation();
+		if(this.props.onDelete){
+		  	this.props.onDelete(this.props.data);
+		}
+  	},
+	render: function(){
+		return (
+			<button onClick={this.handleDelete}>
+			delete this post?
+			</button>
+		);
+	}
+});
+
+//comment structure
 var Comment = React.createClass({
+
 	getInitialState: function(){
 		return {
 			public: true,
-			deleted: false
+			deleted: false,
+			confirmDelete: false
 		};
 	},
 	parseMarkup: function(item) {
@@ -58,12 +80,11 @@ var Comment = React.createClass({
 
     	return { __html: rawMarkup };
   	},
+	
   	handleClick: function(e){
   		e.stopPropagation();
-  		if(this.props.onDelete){
-  			this.props.onDelete(this.props.data);
-  		}
-  		console.log(this.props.data);
+  		this.setState({confirmDelete:true});
+  		
   	},
   	componentWillMount: function(){
   		this.setState({
@@ -71,7 +92,10 @@ var Comment = React.createClass({
   			delete:this.props.data.deleted
   		});
   	},
-	render: function(){
+	render: function(){		
+		if(this.state.confirmDelete){
+			var confirmer = <Confirmation onDelete={this.props.onDelete} data={this.props.data} />;
+		}
 
 		var replies = null;
 		if(typeof this.props.data.comments != "undefined" && this.props.data.comments.length>0){
@@ -79,16 +103,19 @@ var Comment = React.createClass({
 		}
 
 		return (
-			<div className="comment"  onClick={this.handleClick}>
+			<div className="comment">
 				<Author data={this.props.data} /> 
 				<CommentDate datetime={this.props.data.datetime} />
 				<div dangerouslySetInnerHTML={this.parseMarkup(this.props.data.comment)} />
+				<button onClick={this.handleClick} >Delete</button>
+				{confirmer}
 				{replies}
 			</div>
 		);
 	}
 });
 
+//comment listing
 var CommentList = React.createClass({
 	getInitialState: function(){
 		return {
@@ -96,15 +123,20 @@ var CommentList = React.createClass({
 		};
 	},
 	handleCommentClick: function(obj){
-		console.log("handleCommentClick comment List");
 		var data = this.state.comments.slice();
+		var index = 0;
+		data.map(function(d){
+			if(d.key==obj.id){
+				data.splice(0,1);
+				this.setState({comments:data});
+			}
+			index++;
+		}.bind(this));
 	},
 	componentWillMount: function(){
 		var allComments = [];
-		var index = 0;
 		this.props.comments.map(function(com){
-			allComments.push(<Comment data={com} key={com.id} onDelete={this.handleCommentClick}/>)
-			index++;			
+			allComments.push(<Comment data={com} onDelete={this.handleCommentClick}  key={com.id} />)
 		}.bind(this));
 
 		this.setState({comments:allComments});
@@ -119,6 +151,7 @@ var CommentList = React.createClass({
 	}
 });
 
+//replies listing
 var RepliesList = React.createClass({
 	getInitialState: function(){
 		return {
@@ -127,14 +160,22 @@ var RepliesList = React.createClass({
 	},
 	handleReplyClick: function(obj){
 		console.log("handleReplyClick");
+		
 		var data = this.state.replies.slice();
-		console.log(data);
+		var index = 0;
+		data.map(function(d){
+			if(d.key==obj.id){
+				data.splice(0,1);
+				this.setState({replies:data});
+			}
+			index++;
+		}.bind(this));
 	},
 	componentWillMount: function(){
 		var allReplies = [];
 		this.props.comments.map(function(com){
-			allReplies.push(<Comment data={com}  onDelete={this.handleReplyClick} key={com.id} />)			
-		});
+			allReplies.push(<Comment data={com} onDelete={this.handleReplyClick} key={com.id} />);
+		}.bind(this));
 
 		this.setState({replies:allReplies});
 	},
