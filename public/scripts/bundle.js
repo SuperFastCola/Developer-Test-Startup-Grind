@@ -102,11 +102,30 @@
 	var Comment = React.createClass({
 		displayName: 'Comment',
 
+		getInitialState: function () {
+			return {
+				public: true,
+				deleted: false
+			};
+		},
 		parseMarkup: function (item) {
 			var rawMarkup = marked(item.toString(), { sanitize: false });
 			//console.log(rawMarkup);
 
 			return { __html: rawMarkup };
+		},
+		handleClick: function (e) {
+			e.stopPropagation();
+			if (this.props.onDelete) {
+				this.props.onDelete(this.props.data);
+			}
+			console.log(this.props.data);
+		},
+		componentWillMount: function () {
+			this.setState({
+				public: this.props.data.public,
+				delete: this.props.data.deleted
+			});
 		},
 		render: function () {
 
@@ -117,7 +136,7 @@
 
 			return React.createElement(
 				'div',
-				{ className: 'comment' },
+				{ className: 'comment', onClick: this.handleClick },
 				React.createElement(Author, { data: this.props.data }),
 				React.createElement(CommentDate, { datetime: this.props.data.datetime }),
 				React.createElement('div', { dangerouslySetInnerHTML: this.parseMarkup(this.props.data.comment) }),
@@ -134,19 +153,15 @@
 				comments: []
 			};
 		},
-		handleCommentClick: function (e, i) {
-			console.log(e);
-			console.log(i);
+		handleCommentClick: function (obj) {
+			console.log("handleCommentClick comment List");
+			var data = this.state.comments.slice();
 		},
 		componentWillMount: function () {
 			var allComments = [];
 			var index = 0;
 			this.props.comments.map((function (com) {
-				allComments.push(React.createElement(
-					'div',
-					{ key: com.id, onClick: this.handleCommentClick.bind(this, index) },
-					React.createElement(Comment, { data: com })
-				));
+				allComments.push(React.createElement(Comment, { data: com, key: com.id, onDelete: this.handleCommentClick }));
 				index++;
 			}).bind(this));
 
@@ -165,17 +180,30 @@
 	var RepliesList = React.createClass({
 		displayName: 'RepliesList',
 
-		render: function () {
-
+		getInitialState: function () {
+			return {
+				replies: []
+			};
+		},
+		handleReplyClick: function (obj) {
+			console.log("handleReplyClick");
+			var data = this.state.replies.slice();
+			console.log(data);
+		},
+		componentWillMount: function () {
 			var allReplies = [];
 			this.props.comments.map(function (com) {
-				allReplies.push(React.createElement(Comment, { data: com, key: com.id }));
+				allReplies.push(React.createElement(Comment, { data: com, onDelete: this.handleReplyClick, key: com.id }));
 			});
+
+			this.setState({ replies: allReplies });
+		},
+		render: function () {
 
 			return React.createElement(
 				'div',
 				{ className: 'commentsReply' },
-				allReplies
+				this.state.replies
 			);
 		}
 	});

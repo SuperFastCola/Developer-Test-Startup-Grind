@@ -46,11 +46,30 @@ var CommentDate = React.createClass({
 })
 
 var Comment = React.createClass({
+	getInitialState: function(){
+		return {
+			public: true,
+			deleted: false
+		};
+	},
 	parseMarkup: function(item) {
     	var rawMarkup = marked(item.toString(), {sanitize: false});
     	//console.log(rawMarkup);
 
     	return { __html: rawMarkup };
+  	},
+  	handleClick: function(e){
+  		e.stopPropagation();
+  		if(this.props.onDelete){
+  			this.props.onDelete(this.props.data);
+  		}
+  		console.log(this.props.data);
+  	},
+  	componentWillMount: function(){
+  		this.setState({
+  			public:this.props.data.public,
+  			delete:this.props.data.deleted
+  		});
   	},
 	render: function(){
 
@@ -60,7 +79,7 @@ var Comment = React.createClass({
 		}
 
 		return (
-			<div className="comment">
+			<div className="comment"  onClick={this.handleClick}>
 				<Author data={this.props.data} /> 
 				<CommentDate datetime={this.props.data.datetime} />
 				<div dangerouslySetInnerHTML={this.parseMarkup(this.props.data.comment)} />
@@ -76,15 +95,15 @@ var CommentList = React.createClass({
 			comments: []
 		};
 	},
-	handleCommentClick: function(e,i){
-		console.log(e);
-		console.log(i);
+	handleCommentClick: function(obj){
+		console.log("handleCommentClick comment List");
+		var data = this.state.comments.slice();
 	},
 	componentWillMount: function(){
 		var allComments = [];
 		var index = 0;
 		this.props.comments.map(function(com){
-			allComments.push(<div key={com.id} onClick={this.handleCommentClick.bind(this,index)}><Comment data={com} /></div>)
+			allComments.push(<Comment data={com} key={com.id} onDelete={this.handleCommentClick}/>)
 			index++;			
 		}.bind(this));
 
@@ -101,16 +120,29 @@ var CommentList = React.createClass({
 });
 
 var RepliesList = React.createClass({
-	render: function(){
-		
+	getInitialState: function(){
+		return {
+			replies: []
+		};
+	},
+	handleReplyClick: function(obj){
+		console.log("handleReplyClick");
+		var data = this.state.replies.slice();
+		console.log(data);
+	},
+	componentWillMount: function(){
 		var allReplies = [];
 		this.props.comments.map(function(com){
-			allReplies.push(<Comment data={com} key={com.id} />)			
+			allReplies.push(<Comment data={com}  onDelete={this.handleReplyClick} key={com.id} />)			
 		});
+
+		this.setState({replies:allReplies});
+	},
+	render: function(){
 
 		return (
 			<div className="commentsReply">
-				{allReplies}
+				{this.state.replies}
 			</div>
 		);
 	}
