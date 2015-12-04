@@ -9,7 +9,8 @@ module.exports = {
     resolve: {
     	alias: { 
     		jquery: "../modules/jquery-1.11.3.min.js",
-    		animateCSS: "../modules/animate.min.css" 
+    		animateCSS: "../modules/animate.min.css",
+    		stylesSheet: "../modules/styles.sass"    	
     	}
     },
     module:{
@@ -23,7 +24,11 @@ module.exports = {
 		        	presets:['react']
 		      	}
 	    	},
-	    	{ test: /\.css$/, loader: "style-loader!css-loader" }
+	    	{
+	    		test: /\.sass$/,
+      			loader: 'style-loader!css-loader!sass-loader?indentedSyntax=sass&outputStyle=expanded&'
+	    	},
+	    	{ test: /\.css$/, loader: "style-loader!css-loader" },
 
     	]
     },

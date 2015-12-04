@@ -50,6 +50,7 @@
 	var Animate = __webpack_require__(160);
 	var ReactDOM = __webpack_require__(164);
 	var marked = __webpack_require__(165);
+	var css = __webpack_require__(166);
 
 	//render author profile
 	var Author = React.createClass({
@@ -111,6 +112,7 @@
 			if (e.target.getAttribute("data-delete") != null) {
 				if (this.props.onDelete) {
 					this.props.onDelete(this.props.data);
+					this.props.toggleConfirm();
 				}
 			} else {
 				if (this.props.toggleConfirm) {
@@ -257,7 +259,7 @@
 			var index = 0;
 			data.map((function (d) {
 				if (d.key == obj.id) {
-					data.splice(0, 1);
+					data.splice(index, 1);
 					this.setState({ comments: data });
 				}
 				index++;
@@ -294,10 +296,13 @@
 			console.log("handleReplyClick");
 
 			var data = this.state.replies.slice();
+			console.log(data);
 			var index = 0;
+
 			data.map((function (d) {
+
 				if (d.key == obj.id) {
-					data.splice(0, 1);
+					data.splice(index, 1);
 					this.setState({ replies: data });
 				}
 				index++;
@@ -334,6 +339,7 @@
 			this.setState({ showComments: !this.state.showComments });
 		},
 		render: function () {
+
 			return React.createElement(
 				'section',
 				{ className: 'discussion' },
@@ -359,6 +365,7 @@
 			return { topics: [] };
 		},
 		componentDidMount: function () {
+
 			$.get(this.props.url, (function (data) {
 
 				if (this.isMounted()) {
@@ -23709,6 +23716,46 @@
 	}());
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 166 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// style-loader: Adds some css to the DOM by adding a <style> tag
+
+	// load the styles
+	var content = __webpack_require__(167);
+	if(typeof content === 'string') content = [[module.id, content, '']];
+	// add the styles to the DOM
+	var update = __webpack_require__(163)(content, {});
+	if(content.locals) module.exports = content.locals;
+	// Hot Module Replacement
+	if(false) {
+		// When the styles change, update the <style> tags
+		if(!content.locals) {
+			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js?indentedSyntax=sass&outputStyle=expanded&!./styles.sass", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js?indentedSyntax=sass&outputStyle=expanded&!./styles.sass");
+				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+				update(newContent);
+			});
+		}
+		// When the module is disposed, remove the <style> tags
+		module.hot.dispose(function() { update(); });
+	}
+
+/***/ },
+/* 167 */
+/***/ function(module, exports, __webpack_require__) {
+
+	exports = module.exports = __webpack_require__(162)();
+	// imports
+
+
+	// module
+	exports.push([module.id, "html, body, div, span, applet, object, iframe,\nh1, h2, h3, h4, h5, h6, p, blockquote, pre,\na, abbr, acronym, address, big, cite, code,\ndel, dfn, em, img, ins, kbd, q, s, samp,\nsmall, strike, strong, sub, sup, tt, var,\nb, u, i, center,\ndl, dt, dd, ol, ul, li,\nfieldset, form, label, legend,\ntable, caption, tbody, tfoot, thead, tr, th, td,\narticle, aside, canvas, details, embed,\nfigure, figcaption, footer, header, hgroup,\nmenu, nav, output, ruby, section, summary,\ntime, mark, audio, video {\n  margin: 0;\n  padding: 0;\n  border: 0;\n  font-size: 100%;\n  font: inherit;\n  vertical-align: baseline;\n}\n\narticle, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {\n  display: block;\n}\n\nbody {\n  line-height: 1;\n}\n\nol, ul {\n  list-style: none;\n}\n\nblockquote, q {\n  quotes: none;\n}\n\nblockquote:before, blockquote:after, q:before, q:after {\n  content: '';\n  content: none;\n}\n\ntable {\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n\n.clearfix:after {\n  content: \".\";\n  display: block;\n  height: 0;\n  clear: both;\n  visibility: hidden;\n}\n\n.clearfix {\n  display: inline-block;\n}\n\n* html .clearfix {\n  height: 1%;\n}\n\n.clearfix {\n  display: block;\n}\n\nhtml, body {\n  height: 100%;\n}\n\nbody {\n  font-family: \"Karla\", Arial, Helvetica, sans-serif;\n  font-size: 14px;\n  color: black;\n  padding: 0px;\n  text-size-adjust: none;\n  -ms-text-size-adjust: none;\n  -webkit-text-size-adjust: none;\n  -webkit-font-smoothing: antialiased;\n  overflow-x: hidden;\n}\n\ndiv {\n  border: 1px solid green;\n}\n\n.navigation {\n  display: block;\n  position: fixed;\n  width: 250px;\n  height: 100%;\n  left: 100%;\n  top: 0px;\n  z-index: 20;\n  margin-left: 0px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  -o-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.navigation button {\n  display: block;\n  position: relative;\n  width: 100%;\n  height: 30px;\n  border: 0px solid red;\n  margin-bottom: 0px;\n  border-bottom: 1px solid rgba(0, 0, 0, 0.1);\n  padding: 4px 0px 4px 15px;\n  background-color: white;\n  text-decoration: none;\n  opacity: 1;\n  -moz-opacity: 1;\n  filter: \"alpha(opacity = msamt)\";\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  -o-transition: all 0.25s;\n  transition: all 0.25s;\n  cursor: pointer;\n  font-size: 12px;\n  line-height: auto;\n  font-family: \"Karla\", Arial, Helvetica, sans-serif;\n  font-weight: normal;\n  font-style: normal;\n  text-align: left;\n  text-transform: uppercase;\n  color: black;\n}\n\n.navigation button:hover {\n  opacity: 0.7;\n  -moz-opacity: 0.7;\n  filter: \"alpha(opacity = msamt)\";\n}\n\n.navigation button:hover {\n  background-color: rgba(0, 0, 0, 0.1);\n}\n\n.navigation button:first-child {\n  margin-top: 14px;\n}\n\n.navigation.showing {\n  margin-left: -250px;\n  border-left: 1px solid rgba(0, 0, 0, 0.1);\n}\n\n.container {\n  display: block;\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0px;\n  top: 0px;\n  z-index: 10;\n  margin-left: 0px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  -o-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.container.showing {\n  margin-left: -250px;\n}\n", ""]);
+
+	// exports
+
 
 /***/ }
 /******/ ]);

@@ -4,6 +4,7 @@ var React = require('react');
 var Animate = require('animateCSS');
 var ReactDOM = require('react-dom');
 var marked = require('marked');
+var css = require("stylesSheet");
 
 //render author profile
 var Author = React.createClass({
@@ -55,6 +56,7 @@ var Confirmation = React.createClass({
 		if(e.target.getAttribute("data-delete")!=null){
 			if(this.props.onDelete){
 			   	this.props.onDelete(this.props.data);
+			   	this.props.toggleConfirm();
 			}
 		}
 		else{
@@ -177,7 +179,7 @@ var CommentList = React.createClass({
 		var index = 0;
 		data.map(function(d){
 			if(d.key==obj.id){
-				data.splice(0,1);
+				data.splice(index,1);
 				this.setState({comments:data});
 			}
 			index++;
@@ -212,13 +214,17 @@ var RepliesList = React.createClass({
 		console.log("handleReplyClick");
 		
 		var data = this.state.replies.slice();
+		console.log(data);
 		var index = 0;
+
 		data.map(function(d){
+
 			if(d.key==obj.id){
-				data.splice(0,1);
+				data.splice(index,1);
 				this.setState({replies:data});
 			}
 			index++;
+
 		}.bind(this));
 	},
 	componentWillMount: function(){
@@ -250,6 +256,7 @@ var Discussion = React.createClass({
 		 this.setState({ showComments: !this.state.showComments });
 	},
 	render: function(){
+
 		return (
 	        <section className="discussion">
 	        	<h1 className="discussion-title">{this.props.topic.title}</h1>
@@ -265,6 +272,7 @@ var CommentArea = React.createClass({
 		return {topics:[]};
 	},
 	componentDidMount: function() {
+
 		$.get(this.props.url, function(data){
 
 			if(this.isMounted()){
