@@ -9,7 +9,7 @@ var marked = require('marked');
 var Author = React.createClass({
 	render: function(){
 		return (
-			<div>
+			<div className="author-holder">
 				<span className="author-name">{this.props.data.author}</span>
 			</div>
 		);
@@ -42,7 +42,7 @@ var CommentDate = React.createClass({
 			" - " + usHour + ":" + minutes + timeOfDay;
 
 		return (
-			<div className="commentDate">{commentDate}</div>
+			<div className="comment-date">{commentDate}</div>
 		);
 	}
 })
@@ -51,15 +51,25 @@ var CommentDate = React.createClass({
 var Confirmation = React.createClass({
 	handleDelete: function(e){
 		e.stopPropagation();
-		if(this.props.onDelete){
-		  	this.props.onDelete(this.props.data);
+
+		if(e.target.getAttribute("data-delete")!=null){
+			if(this.props.onDelete){
+			   	this.props.onDelete(this.props.data);
+			}
+		}
+		else{
+			if(this.props.toggleConfirm){
+				this.props.toggleConfirm();
+			}
 		}
   	},
 	render: function(){
 		return (
-			<button onClick={this.handleDelete}>
-			delete this post?
-			</button>
+			<div className="confirmation-holder">
+				<span>Delete this post?</span>
+				<button className="button-confirm-delete" data-delete="1" onClick={this.handleDelete}>Yes</button>
+				<button className="button-deny-delete" onClick={this.handleDelete}>No</button>
+			</div>
 		);
 	}
 });
@@ -71,7 +81,12 @@ var Comment = React.createClass({
 		return {
 			public: true,
 			deleted: false,
-			confirmDelete: false
+			confirmDelete: false,
+			editingComment: false,
+			commentBody: null,
+			hasReplies: false,
+			showReplies: false,
+			authorLoggedIn: false 
 		};
 	},
 	parseMarkup: function(item) {
@@ -80,36 +95,71 @@ var Comment = React.createClass({
 
     	return { __html: rawMarkup };
   	},
-	
-  	handleClick: function(e){
+  	toggleConfirm: function(){
+  		this.setState({confirmDelete: !this.state.confirmDelete });
+  	},
+  	toggleReplies: function(e){
+		this.setState({showReplies: !this.state.showReplies }); 
+  	},
+  	handleDelete: function(e){
   		e.stopPropagation();
-  		this.setState({confirmDelete:true});
-  		
+  		this.toggleConfirm();
+  	},
+  	handleEdit: function(e){
+  		e.stopPropagation();
+  		this.setState({editingComment: !this.state.editingComment });  		
   	},
   	componentWillMount: function(){
+
+  		var loggedin = (this.props.loggedInID===this.props.data.author_id)?true:false;
+
   		this.setState({
   			public:this.props.data.public,
-  			delete:this.props.data.deleted
+  			delete:this.props.data.deleted,
+  			commentBody: this.props.data.comment,
+  			authorLoggedIn: loggedin
   		});
+
+  		this.checkForReplies();
+
+  	},
+  	handleEditComment: function(e){
+  		this.setState({ commentBody: String(e.target.value) });
+  	},
+  	checkForReplies: function(){
+  		if(typeof this.props.data.comments != "undefined" && this.props.data.comments.length>0){
+  			this.setState({hasReplies:true});
+  		}
+
+  	},
+  	commentFunctions: function(confirmer){
+  		return (
+  			<div className="comment-functions">
+				<button className="button-delete" onClick={this.handleDelete} >Delete</button>
+				<button className="button-edit" onClick={this.handleEdit} >{ !this.state.editingComment ? "Edit" : "Save" }</button>
+				{confirmer}
+			</div>
+		);
   	},
 	render: function(){		
 		if(this.state.confirmDelete){
-			var confirmer = <Confirmation onDelete={this.props.onDelete} data={this.props.data} />;
+			var confirmer = <Confirmation onDelete={this.props.onDelete} toggleConfirm={this.toggleConfirm} data={this.props.data} />;
 		}
 
-		var replies = null;
-		if(typeof this.props.data.comments != "undefined" && this.props.data.comments.length>0){
-			replies = <RepliesList comments={this.props.data.comments} />			
+		var commentBody = <div className="comment-body" dangerouslySetInnerHTML={this.parseMarkup(this.state.commentBody)} />;
+		if(this.state.editingComment){
+			commentBody = <textarea className="comment-body-edit" value={this.state.commentBody} onChange={this.handleEditComment} />
 		}
 
 		return (
-			<div className="comment">
+			<div className="comment-holder">
 				<Author data={this.props.data} /> 
 				<CommentDate datetime={this.props.data.datetime} />
-				<div dangerouslySetInnerHTML={this.parseMarkup(this.props.data.comment)} />
-				<button onClick={this.handleClick} >Delete</button>
-				{confirmer}
-				{replies}
+				{commentBody}
+				{ this.state.authorLoggedIn ? this.commentFunctions(confirmer) :  null }
+				{this.state.hasReplies ? <button className="button-show-replies" onClick={this.toggleReplies} > { !this.state.showReplies ? "Show Comments" : "Hide Comments" }</button> : null }
+				{ this.state.showReplies ? <RepliesList comments={this.props.data.comments} loggedInID={this.props.loggedInID} /> : null }
+
 			</div>
 		);
 	}
@@ -136,7 +186,7 @@ var CommentList = React.createClass({
 	componentWillMount: function(){
 		var allComments = [];
 		this.props.comments.map(function(com){
-			allComments.push(<Comment data={com} onDelete={this.handleCommentClick}  key={com.id} />)
+			allComments.push(<Comment data={com} onDelete={this.handleCommentClick}  key={com.id} loggedInID={this.props.loggedInID} />)
 		}.bind(this));
 
 		this.setState({comments:allComments});
@@ -144,7 +194,7 @@ var CommentList = React.createClass({
 	render: function(){
 
 		return (
-			<div className="commentsList">
+			<div className="comments-holder">
 				{this.state.comments}
 			</div>
 		);
@@ -174,7 +224,7 @@ var RepliesList = React.createClass({
 	componentWillMount: function(){
 		var allReplies = [];
 		this.props.comments.map(function(com){
-			allReplies.push(<Comment data={com} onDelete={this.handleReplyClick} key={com.id} />);
+			allReplies.push(<Comment data={com} onDelete={this.handleReplyClick} key={com.id} loggedInID={this.props.loggedInID} />);
 		}.bind(this));
 
 		this.setState({replies:allReplies});
@@ -182,7 +232,7 @@ var RepliesList = React.createClass({
 	render: function(){
 
 		return (
-			<div className="commentsReply">
+			<div className="comments-replies-holder">
 				{this.state.replies}
 			</div>
 		);
@@ -201,10 +251,10 @@ var Discussion = React.createClass({
 	},
 	render: function(){
 		return (
-	        <section>
-	        	<button onClick={this.showDetails} >SHow</button>
-	        	<h1>{this.props.topic.title}</h1>
-	        	{ this.state.showComments ? <CommentList comments={this.props.topic.comments} /> : null }
+	        <section className="discussion">
+	        	<h1 className="discussion-title">{this.props.topic.title}</h1>
+	        	<button className="button-show-comments" onClick={this.showDetails} >Show</button>
+	        	{ this.state.showComments ? <CommentList comments={this.props.topic.comments} loggedInID={this.props.loggedInID} /> : null }
 	        </section>
 	      );
 	}
@@ -224,12 +274,13 @@ var CommentArea = React.createClass({
 	},
 	render: function(){
 		var discussions = [];
+
 		this.state.topics.forEach(function(top){
-			discussions.push(<Discussion topic={top.discussion} key={top.discussion.id}/>);
-		});
+			discussions.push(<Discussion topic={top.discussion} key={top.discussion.id} loggedInID={this.props.loggedInID} />);
+		}.bind(this));
 
 		return (
-			<div className="commentArea">{discussions}</div>
+			<div className="comment-area">{discussions}</div>
 		);
 	}
 });
@@ -237,13 +288,14 @@ var CommentArea = React.createClass({
 
 var Main = React.createClass({
 	render: function(){
+
 		return (
-			<div>
-				<h1>Today's Topics</h1>
-				<CommentArea url={"../comments.json"} />
+			<div className="container">
+				<header>Today's Topics</header>
+				<CommentArea loggedInID={this.props.loggedInID} url={"../comments.json"} />
 			</div>
 		);
 	}
 });
 
-ReactDOM.render(<Main />,document.getElementById('app'));
+ReactDOM.render(<Main loggedInID={2} />,document.getElementById('app'));

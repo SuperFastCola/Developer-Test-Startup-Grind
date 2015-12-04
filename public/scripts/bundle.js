@@ -51,13 +51,14 @@
 	var ReactDOM = __webpack_require__(164);
 	var marked = __webpack_require__(165);
 
+	//render author profile
 	var Author = React.createClass({
 		displayName: 'Author',
 
 		render: function () {
 			return React.createElement(
 				'div',
-				null,
+				{ className: 'author-holder' },
 				React.createElement(
 					'span',
 					{ className: 'author-name' },
@@ -67,6 +68,7 @@
 		}
 	});
 
+	//render comment date for United States.
 	var CommentDate = React.createClass({
 		displayName: 'CommentDate',
 
@@ -93,19 +95,66 @@
 
 			return React.createElement(
 				'div',
-				{ className: 'commentDate' },
+				{ className: 'comment-date' },
 				commentDate
 			);
 		}
 	});
 
+	//dpost deletion confirmation
+	var Confirmation = React.createClass({
+		displayName: 'Confirmation',
+
+		handleDelete: function (e) {
+			e.stopPropagation();
+
+			if (e.target.getAttribute("data-delete") != null) {
+				if (this.props.onDelete) {
+					this.props.onDelete(this.props.data);
+				}
+			} else {
+				if (this.props.toggleConfirm) {
+					this.props.toggleConfirm();
+				}
+			}
+		},
+		render: function () {
+			return React.createElement(
+				'div',
+				{ className: 'confirmation-holder' },
+				React.createElement(
+					'span',
+					null,
+					'Delete this post?'
+				),
+				React.createElement(
+					'button',
+					{ className: 'button-confirm-delete', 'data-delete': '1', onClick: this.handleDelete },
+					'Yes'
+				),
+				React.createElement(
+					'button',
+					{ className: 'button-deny-delete', onClick: this.handleDelete },
+					'No'
+				)
+			);
+		}
+	});
+
+	//comment structure
 	var Comment = React.createClass({
 		displayName: 'Comment',
 
 		getInitialState: function () {
 			return {
 				public: true,
-				deleted: false
+				deleted: false,
+				confirmDelete: false,
+				editingComment: false,
+				commentBody: null,
+				hasReplies: false,
+				showReplies: false,
+				authorLoggedIn: false
 			};
 		},
 		parseMarkup: function (item) {
@@ -114,37 +163,87 @@
 
 			return { __html: rawMarkup };
 		},
-		handleClick: function (e) {
+		toggleConfirm: function () {
+			this.setState({ confirmDelete: !this.state.confirmDelete });
+		},
+		toggleReplies: function (e) {
+			this.setState({ showReplies: !this.state.showReplies });
+		},
+		handleDelete: function (e) {
 			e.stopPropagation();
-			if (this.props.onDelete) {
-				this.props.onDelete(this.props.data);
-			}
-			console.log(this.props.data);
+			this.toggleConfirm();
+		},
+		handleEdit: function (e) {
+			e.stopPropagation();
+			this.setState({ editingComment: !this.state.editingComment });
 		},
 		componentWillMount: function () {
+
+			var loggedin = this.props.loggedInID === this.props.data.author_id ? true : false;
+
 			this.setState({
 				public: this.props.data.public,
-				delete: this.props.data.deleted
+				delete: this.props.data.deleted,
+				commentBody: this.props.data.comment,
+				authorLoggedIn: loggedin
 			});
+
+			this.checkForReplies();
+		},
+		handleEditComment: function (e) {
+			this.setState({ commentBody: String(e.target.value) });
+		},
+		checkForReplies: function () {
+			if (typeof this.props.data.comments != "undefined" && this.props.data.comments.length > 0) {
+				this.setState({ hasReplies: true });
+			}
+		},
+		commentFunctions: function (confirmer) {
+			return React.createElement(
+				'div',
+				{ className: 'comment-functions' },
+				React.createElement(
+					'button',
+					{ className: 'button-delete', onClick: this.handleDelete },
+					'Delete'
+				),
+				React.createElement(
+					'button',
+					{ className: 'button-edit', onClick: this.handleEdit },
+					!this.state.editingComment ? "Edit" : "Save"
+				),
+				confirmer
+			);
 		},
 		render: function () {
+			if (this.state.confirmDelete) {
+				var confirmer = React.createElement(Confirmation, { onDelete: this.props.onDelete, toggleConfirm: this.toggleConfirm, data: this.props.data });
+			}
 
-			var replies = null;
-			if (typeof this.props.data.comments != "undefined" && this.props.data.comments.length > 0) {
-				replies = React.createElement(RepliesList, { comments: this.props.data.comments });
+			var commentBody = React.createElement('div', { className: 'comment-body', dangerouslySetInnerHTML: this.parseMarkup(this.state.commentBody) });
+			if (this.state.editingComment) {
+				commentBody = React.createElement('textarea', { className: 'comment-body-edit', value: this.state.commentBody, onChange: this.handleEditComment });
 			}
 
 			return React.createElement(
 				'div',
-				{ className: 'comment', onClick: this.handleClick },
+				{ className: 'comment-holder' },
 				React.createElement(Author, { data: this.props.data }),
 				React.createElement(CommentDate, { datetime: this.props.data.datetime }),
-				React.createElement('div', { dangerouslySetInnerHTML: this.parseMarkup(this.props.data.comment) }),
-				replies
+				commentBody,
+				this.state.authorLoggedIn ? this.commentFunctions(confirmer) : null,
+				this.state.hasReplies ? React.createElement(
+					'button',
+					{ className: 'button-show-replies', onClick: this.toggleReplies },
+					' ',
+					!this.state.showReplies ? "Show Comments" : "Hide Comments"
+				) : null,
+				this.state.showReplies ? React.createElement(RepliesList, { comments: this.props.data.comments, loggedInID: this.props.loggedInID }) : null
 			);
 		}
 	});
 
+	//comment listing
 	var CommentList = React.createClass({
 		displayName: 'CommentList',
 
@@ -154,15 +253,20 @@
 			};
 		},
 		handleCommentClick: function (obj) {
-			console.log("handleCommentClick comment List");
 			var data = this.state.comments.slice();
+			var index = 0;
+			data.map((function (d) {
+				if (d.key == obj.id) {
+					data.splice(0, 1);
+					this.setState({ comments: data });
+				}
+				index++;
+			}).bind(this));
 		},
 		componentWillMount: function () {
 			var allComments = [];
-			var index = 0;
 			this.props.comments.map((function (com) {
-				allComments.push(React.createElement(Comment, { data: com, key: com.id, onDelete: this.handleCommentClick }));
-				index++;
+				allComments.push(React.createElement(Comment, { data: com, onDelete: this.handleCommentClick, key: com.id, loggedInID: this.props.loggedInID }));
 			}).bind(this));
 
 			this.setState({ comments: allComments });
@@ -171,12 +275,13 @@
 
 			return React.createElement(
 				'div',
-				{ className: 'commentsList' },
+				{ className: 'comments-holder' },
 				this.state.comments
 			);
 		}
 	});
 
+	//replies listing
 	var RepliesList = React.createClass({
 		displayName: 'RepliesList',
 
@@ -187,14 +292,22 @@
 		},
 		handleReplyClick: function (obj) {
 			console.log("handleReplyClick");
+
 			var data = this.state.replies.slice();
-			console.log(data);
+			var index = 0;
+			data.map((function (d) {
+				if (d.key == obj.id) {
+					data.splice(0, 1);
+					this.setState({ replies: data });
+				}
+				index++;
+			}).bind(this));
 		},
 		componentWillMount: function () {
 			var allReplies = [];
-			this.props.comments.map(function (com) {
-				allReplies.push(React.createElement(Comment, { data: com, onDelete: this.handleReplyClick, key: com.id }));
-			});
+			this.props.comments.map((function (com) {
+				allReplies.push(React.createElement(Comment, { data: com, onDelete: this.handleReplyClick, key: com.id, loggedInID: this.props.loggedInID }));
+			}).bind(this));
 
 			this.setState({ replies: allReplies });
 		},
@@ -202,7 +315,7 @@
 
 			return React.createElement(
 				'div',
-				{ className: 'commentsReply' },
+				{ className: 'comments-replies-holder' },
 				this.state.replies
 			);
 		}
@@ -223,18 +336,18 @@
 		render: function () {
 			return React.createElement(
 				'section',
-				null,
-				React.createElement(
-					'button',
-					{ onClick: this.showDetails },
-					'SHow'
-				),
+				{ className: 'discussion' },
 				React.createElement(
 					'h1',
-					null,
+					{ className: 'discussion-title' },
 					this.props.topic.title
 				),
-				this.state.showComments ? React.createElement(CommentList, { comments: this.props.topic.comments }) : null
+				React.createElement(
+					'button',
+					{ className: 'button-show-comments', onClick: this.showDetails },
+					'Show'
+				),
+				this.state.showComments ? React.createElement(CommentList, { comments: this.props.topic.comments, loggedInID: this.props.loggedInID }) : null
 			);
 		}
 	});
@@ -255,13 +368,14 @@
 		},
 		render: function () {
 			var discussions = [];
-			this.state.topics.forEach(function (top) {
-				discussions.push(React.createElement(Discussion, { topic: top.discussion, key: top.discussion.id }));
-			});
+
+			this.state.topics.forEach((function (top) {
+				discussions.push(React.createElement(Discussion, { topic: top.discussion, key: top.discussion.id, loggedInID: this.props.loggedInID }));
+			}).bind(this));
 
 			return React.createElement(
 				'div',
-				{ className: 'commentArea' },
+				{ className: 'comment-area' },
 				discussions
 			);
 		}
@@ -271,20 +385,21 @@
 		displayName: 'Main',
 
 		render: function () {
+
 			return React.createElement(
 				'div',
-				null,
+				{ className: 'container' },
 				React.createElement(
-					'h1',
+					'header',
 					null,
 					'Today\'s Topics'
 				),
-				React.createElement(CommentArea, { url: "../comments.json" })
+				React.createElement(CommentArea, { loggedInID: this.props.loggedInID, url: "../comments.json" })
 			);
 		}
 	});
 
-	ReactDOM.render(React.createElement(Main, null), document.getElementById('app'));
+	ReactDOM.render(React.createElement(Main, { loggedInID: 2 }), document.getElementById('app'));
 
 /***/ },
 /* 1 */
