@@ -10,7 +10,7 @@ module.exports = {
     	alias: { 
     		jquery: "../modules/jquery-1.11.3.min.js",
     		animateCSS: "../modules/animate.min.css",
-    		stylesSheet: "../modules/styles.sass"    	
+    		stylesSheet: "../modules/styles.scss"    	
     	}
     },
     module:{
@@ -25,8 +25,8 @@ module.exports = {
 		      	}
 	    	},
 	    	{
-	    		test: /\.sass$/,
-      			loader: 'style-loader!css-loader!sass-loader?indentedSyntax=sass&outputStyle=expanded&'
+	    		test: /\.scss$/,
+      			loader: 'style-loader!css-loader!sass-loader?outputStyle=expanded&'
 	    	},
 	    	{ test: /\.css$/, loader: "style-loader!css-loader" },
 

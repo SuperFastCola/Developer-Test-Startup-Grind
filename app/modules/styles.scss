@@ -1,0 +1,49 @@
+@import "bourbon/bourbon";
+@import "neat/neat";
+@import url(http://fonts.googleapis.com/css?family=Lato:300,400,700);
+
+
+@include font-face("codropsicons", "/css/fonts/scodropsicons/codropsicons", $file-formats: eot woff2 woff);
+
+
+
+$modular-scale-ratio: $golden;
+$modular-scale-base: 12px;
+
+@mixin bdr($w: 1px, $color: red){
+	border: $w solid $color;
+}
+
+*{
+	box-sizing: border-box;
+	font-family: 'Lato';
+  	font-size: modular-scale(1);
+  	@include bdr;
+}
+
+.container{
+	@include outer-container(100%);
+}
+
+.comment-area{
+	@include outer-container(100%);
+}
+
+.discussion, .comment-list,.comment-holder{
+	 @include outer-container(100%);
+}
+
+.comment-holder{
+	@include bdr(1px, green);
+}
+
+.comments-replies-holder{
+	@include outer-container(100%);
+	@include bdr(1px, blue);	
+
+	.comment-holder{
+		 @include omega;
+		 @include span-columns(2 of 6);
+	}
+
+}
