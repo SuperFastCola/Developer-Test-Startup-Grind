@@ -164,7 +164,7 @@ var Comment = React.createClass({
 				{commentBody}
 				{ this.state.authorLoggedIn ? this.commentFunctions(confirmer) :  null }
 				{this.state.hasReplies ? <button className="button-show-replies" onClick={this.toggleReplies} > { !this.state.showReplies ? "Show Comments" : "Hide Comments" }</button> : null }
-				{ this.state.showReplies ? <RepliesList comments={this.props.data.comments} loggedInID={this.props.loggedInID} /> : null }
+				{ this.state.showReplies ? <CommentList cssClass="comments-replies-holder" comments={this.props.data.comments} loggedInID={this.props.loggedInID} /> : null }
 			</div>
 		);
 	}
@@ -198,55 +198,19 @@ var CommentList = React.createClass({
 	},
 	render: function(){
 
+		var cssClass="comments-holder";
+		if(this.props.cssClass){
+			cssClass = this.props.cssClass;
+		}
+
 		return (
-			<div className="comments-holder">
+			<div className={cssClass}>
 				{this.state.comments}
 			</div>
 		);
 	}
 });
 
-//replies listing
-var RepliesList = React.createClass({
-	getInitialState: function(){
-		return {
-			replies: []
-		};
-	},
-	handleReplyClick: function(obj){
-		console.log("handleReplyClick");
-		
-		var data = this.state.replies.slice();
-		console.log(data);
-		var index = 0;
-
-		data.map(function(d){
-
-			if(d.key==obj.id){
-				data.splice(index,1);
-				this.setState({replies:data});
-			}
-			index++;
-
-		}.bind(this));
-	},
-	componentWillMount: function(){
-		var allReplies = [];
-		this.props.comments.map(function(com){
-			allReplies.push(<Comment data={com} onDelete={this.handleReplyClick} key={com.id} loggedInID={this.props.loggedInID} />);
-		}.bind(this));
-
-		this.setState({replies:allReplies});
-	},
-	render: function(){
-
-		return (
-			<div className="comments-replies-holder">
-				{this.state.replies}
-			</div>
-		);
-	}
-});
 
 var ShowCommentButtons = React.createClass({
 	handleButtonClick: function(){
