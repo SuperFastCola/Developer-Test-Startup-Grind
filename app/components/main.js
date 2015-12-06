@@ -11,6 +11,9 @@ var Author = React.createClass({
 	render: function(){
 		return (
 			<div className="author-holder">
+				<svg className="authorBubbleHolder">
+					<path className="authorBubble" d="M 3 3 L 100 3 L 100 60 L 80 40 L 3 40 Z" />
+				</svg>
 				<span className="author-name">{this.props.data.author}</span>
 			</div>
 		);
@@ -154,6 +157,7 @@ var Comment = React.createClass({
 		}
 
 		return (
+
 			<div className="comment-holder">
 				<Author data={this.props.data} /> 
 				<CommentDate datetime={this.props.data.datetime} />
@@ -161,7 +165,6 @@ var Comment = React.createClass({
 				{ this.state.authorLoggedIn ? this.commentFunctions(confirmer) :  null }
 				{this.state.hasReplies ? <button className="button-show-replies" onClick={this.toggleReplies} > { !this.state.showReplies ? "Show Comments" : "Hide Comments" }</button> : null }
 				{ this.state.showReplies ? <RepliesList comments={this.props.data.comments} loggedInID={this.props.loggedInID} /> : null }
-
 			</div>
 		);
 	}
@@ -245,6 +248,34 @@ var RepliesList = React.createClass({
 	}
 });
 
+var ShowCommentButtons = React.createClass({
+	handleButtonClick: function(){
+		if(this.props.clickHandler){
+			this.props.clickHandler();
+		}
+
+	},
+	render: function(){
+		return (
+			<button className="button-show-comments" onClick={this.handleButtonClick} >
+				<svg className="showIcon1Holder stack0">
+					<path className="showIcon1" d="M 1 7.5 L 12.5 1 L 25 7.5 L 12.5 15 Z" />
+				</svg>
+				<svg className="showIcon2Holder stack1">
+					<path className="showIcon2" d="M 1 1 L 12.5 7.5 L 25 1" />
+				</svg>
+				<svg className="showIcon2Holder stack2">
+					<path className="showIcon2" d="M 1 1 L 12.5 7.5 L 25 1" />
+				</svg>
+				<svg className="showIcon2Holder stack3">
+					<path className="showIcon2" d="M 1 1 L 12.5 7.5 L 25 1" />
+				</svg>
+
+			</button>
+		);
+	}
+});
+
 var Discussion = React.createClass({
 	getInitialState: function(){
 		return {
@@ -259,8 +290,13 @@ var Discussion = React.createClass({
 
 		return (
 	        <section className="discussion">
-	        	<h1 className="discussion-title">{this.props.topic.title}</h1>
-	        	<button className="button-show-comments" onClick={this.showDetails} >Show</button>
+	        	<div className="discussionHeader">
+		        	<Author data={this.props.topic} /> 
+		        	<CommentDate datetime={this.props.topic.datetime} />
+		        	<h1 className="discussion-title">{this.props.topic.title}</h1>
+		        	<h2 className="discussion-subtitle">{this.props.topic.discussion}</h2>
+		        	<ShowCommentButtons clickHandler={this.showDetails} />
+		        </div>
 	        	{ this.state.showComments ? <CommentList comments={this.props.topic.comments} loggedInID={this.props.loggedInID} /> : null }
 	        </section>
 	      );
@@ -299,7 +335,7 @@ var Main = React.createClass({
 
 		return (
 			<div className="container">
-				<header>Today's Topics</header>
+				<header>Discussions</header>
 				<CommentArea loggedInID={this.props.loggedInID} url={"../comments.json"} />
 			</div>
 		);

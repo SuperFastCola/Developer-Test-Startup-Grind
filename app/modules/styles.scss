@@ -1,12 +1,11 @@
 @import "bourbon/bourbon";
 @import "neat/neat";
-@import url(http://fonts.googleapis.com/css?family=Lato:300,400,700);
-
-
+@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,700,300);
 @include font-face("codropsicons", "/css/fonts/scodropsicons/codropsicons", $file-formats: eot woff2 woff);
 
-
-
+$magenta: #E25ABC;
+$bluegray: #383E4C;
+$linegray: #D6D6D6;
 $modular-scale-ratio: $golden;
 $modular-scale-base: 12px;
 
@@ -16,20 +15,54 @@ $modular-scale-base: 12px;
 
 *{
 	box-sizing: border-box;
-	font-family: 'Lato';
+	font-family: 'Roboto Condensed', sans-serif;
+	font-weight: 300;
   	font-size: modular-scale(1);
-  	@include bdr;
+  	color: $bluegray;
+  	// @include bdr;
+}
+
+body{
+	background-color: $bluegray;
+}
+
+header{
+	font-size: 40px;
+	@include margin(20px 0px 0px 0px);
+}
+
+header,h1{
+	color: $magenta;
+}
+
+h1,h2{
+	@include margin(0px);
+	@include padding(0);
+	font-size: 30px;
+	line-height: 30px;
+}
+
+h1{
+	@include padding(10px null 5px null);
+}
+
+button{
+	background: transparent;
+	@include bdr(0px);
 }
 
 .container{
-	@include outer-container(100%);
+	@include outer-container(90%);
 }
 
 .comment-area{
 	@include outer-container(100%);
+	@include margin(10px 0);
+	background-color: white;
 }
 
 .discussion, .comment-list,.comment-holder{
+	position: relative;
 	 @include outer-container(100%);
 }
 
@@ -45,5 +78,112 @@ $modular-scale-base: 12px;
 		 @include omega;
 		 @include span-columns(2 of 6);
 	}
+}
+
+
+.discussion{
+
+	.discussionHeader{
+		min-height: 90px;
+		@include position(relative);	
+	}
+
+}
+
+.author-holder{
+	$size: 105px;
+	$h: 70px;
+	@include position(relative, 10px null null null);
+	@include margin(0px 10px 10px 10px);
+	width: $size;
+	height: $h;
+	float: left;
+
+	.authorBubbleHolder{
+		width: $size;
+		height: $h;
+		@include position(absolute, 0px null null 0px);
+
+		.authorBubble{
+			fill: white;
+			stroke: $linegray;
+			stroke-width: 5;
+		}
+	}
+
+	.author-name{
+		@include position(absolute, 10px null null 10px);
+		font-size: 16px;
+	}
+}
+
+.comment-date{
+	@include position(absolute,10px null null 100%);
+	min-width: 220px;
+	@include margin(0px 0px 0px -220px);
+	@include padding(null 10px null null);
+	text-align: right;
+}
+
+.button-show-comments{
+	$size: 43px;
+	$scaleAdjust: 10px;
+	$position: 100%;
+	@include position(absolute, $position null null $position);
+	@include margin( (-($size + $scaleAdjust)) null null (-($size + $scaleAdjust)));
+	@include transform(scale(1.15));
+	width: $size;
+	height: $size;
+
+
+	.showIcon1Holder{
+		$w: 27px;
+		$h: 17px;
+		@include position(absolute, 0 null null 50%);
+		@include margin(0px null null (-($w/2)));
+		width: $w;
+		height: $h;
+
+		&.stack0{
+			top: 50%;
+			margin-top: -15px;
+		}
+	}
+	.showIcon1{
+		fill: white;
+		stroke: $magenta;
+		stroke-width: 2;
+	}
+
+	.showIcon2Holder{
+		$w: 27px;
+		$h: 10px;
+		width: $w;
+		height: $h;
+		@include position(absolute, 0 null null 50%);
+		@include margin(0px null null (-($w/2)));
+
+		&.stack1{
+			top: 50%;
+			margin-top: -3px;
+		}
+
+		&.stack2{
+			top: 50%;
+			margin-top: 2px;
+		}
+
+		&.stack3{
+			top: 50%;
+			margin-top: 7px;
+		}
+	}
+	.showIcon2{
+		fill: transparent;
+		stroke: $magenta;
+		stroke-width: 2;
+	}
+
+
 
 }
