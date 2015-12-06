@@ -22,6 +22,10 @@ $modular-scale-base: 12px;
   	// @include bdr;
 }
 
+*:focus {
+    outline: none;
+}
+
 body{
 	background-color: $bluegray;
 }
@@ -48,6 +52,7 @@ h1{
 
 button{
 	background: transparent;
+	cursor: pointer;
 	@include bdr(0px);
 }
 
@@ -84,7 +89,7 @@ button{
 .discussion{
 
 	.discussionHeader{
-		min-height: 90px;
+		min-height: 95px;
 		@include position(relative);	
 	}
 
@@ -127,6 +132,9 @@ button{
 
 .button-show-comments{
 	$size: 43px;
+	$spanwidth: 90px;
+	$spanheight: 15px;
+
 	$scaleAdjust: 10px;
 	$position: 100%;
 	@include position(absolute, $position null null $position);
@@ -134,7 +142,30 @@ button{
 	@include transform(scale(1.15));
 	width: $size;
 	height: $size;
+	overflow: hidden;
 
+	span{
+		$w: $spanwidth;
+		$h: $spanheight;
+
+		width: $w;
+		height: $h;
+		color: $magenta;
+		@include position(absolute, 50% null null 0px);
+		@include margin((-($h/2)) null null (-($w)) );
+
+		@include border-style(null null null solid);
+		border-color: $linegray;
+		border-width: 2px;
+
+		clip: rect(0px $spanwidth $spanheight $spanwidth);
+		font-size: 12px;
+		line-height: 10px;
+		@include padding(2px null null null);
+		text-align: right;
+
+		@include transition(clip .25s);
+	}
 
 	.showIcon1Holder{
 		$w: 27px;
@@ -144,9 +175,12 @@ button{
 		width: $w;
 		height: $h;
 
+		@include transition(all .25s);
+
+
 		&.stack0{
 			top: 50%;
-			margin-top: -15px;
+			@include transform(translateY(-10px));
 		}
 	}
 	.showIcon1{
@@ -163,19 +197,22 @@ button{
 		@include position(absolute, 0 null null 50%);
 		@include margin(0px null null (-($w/2)));
 
+		@include transition(all .25s);
+
 		&.stack1{
 			top: 50%;
-			margin-top: -3px;
+			@include transform(translateY(-2px));
+			
 		}
 
 		&.stack2{
 			top: 50%;
-			margin-top: 2px;
+			@include transform(translateY(0px));
 		}
 
 		&.stack3{
 			top: 50%;
-			margin-top: 7px;
+			@include transform(translateY(2px));
 		}
 	}
 	.showIcon2{
@@ -183,6 +220,88 @@ button{
 		stroke: $magenta;
 		stroke-width: 2;
 	}
+
+	&:hover{
+		span{
+			clip: rect(0px $spanwidth $spanheight 0px);
+		}
+	}
+
+
+	&:hover{
+
+		overflow: visible;
+
+		.showIcon1Holder{
+			&.stack0{
+				@include transform(translateY(-15px));
+			}
+		}
+
+		.showIcon2Holder{
+			&.stack1{
+				@include transform(translateY(-3px));
+			}
+
+			&.stack2{
+				@include transform(translateY(2px));
+			}
+
+			&.stack3{
+				@include transform(translateY(7px));
+			}
+
+		}
+
+	}
+
+	&.maximized{
+		.showIcon1Holder{
+			&.stack0{
+				@include transform(translateY(-15px));
+			}
+		}
+
+		.showIcon2Holder{
+			&.stack1{
+				@include transform(translateY(-3px));
+			}
+
+			&.stack2{
+				@include transform(translateY(2px));
+			}
+
+			&.stack3{
+				@include transform(translateY(7px));
+			}
+
+		}
+	}
+
+	&.maximized:hover{
+
+		.showIcon1Holder{
+			&.stack0{
+				@include transform(translateY(-10px));
+			}
+		}
+
+		.showIcon2Holder{
+			&.stack1{
+				@include transform(translateY(-2px));
+			}
+
+			&.stack2{
+				@include transform(translateY(0px));
+			}
+
+			&.stack3{
+				@include transform(translateY(2px));
+			}
+
+		}
+	}
+
 
 
 

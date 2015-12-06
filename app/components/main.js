@@ -213,15 +213,44 @@ var CommentList = React.createClass({
 
 
 var ShowCommentButtons = React.createClass({
-	handleButtonClick: function(){
+	getInitialState: function(){
+		return {
+			maximized: false,
+			buttonClass: "button-show-comments",
+			animating: false
+		};
+	},
+	changeButtonClass: function(){
+
+		this.setState({maximized: !this.state.maximized});
+
+		if(!this.state.maximized){
+			this.setState({buttonClass: "button-show-comments maximized"});
+		}
+		else{
+			this.setState({buttonClass: "button-show-comments"});	
+		}
+	},
+	handleButtonClick: function(e){
+		e.stopPropagation();
+	
+		this.changeButtonClass();
+
 		if(this.props.clickHandler){
 			this.props.clickHandler();
 		}
-
 	},
 	render: function(){
+
+		var lableText = ((this.state.maximized)? "Hide":"Show") + " Comments";
+
 		return (
-			<button className="button-show-comments" onClick={this.handleButtonClick} >
+			<button className={this.state.buttonClass}  
+				onClick={this.handleButtonClick} 
+				onMouseOver={this.handleMouseEnter} 
+				onMouseLeave={this.handleMouseLeave} 
+				>
+				<span>{lableText}</span>
 				<svg className="showIcon1Holder stack0">
 					<path className="showIcon1" d="M 1 7.5 L 12.5 1 L 25 7.5 L 12.5 15 Z" />
 				</svg>
