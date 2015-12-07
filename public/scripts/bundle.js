@@ -74,6 +74,30 @@
 		}
 	});
 
+	var ConfirmIcon = React.createClass({
+		displayName: 'ConfirmIcon',
+
+		render: function () {
+			return React.createElement(
+				'svg',
+				{ className: 'confirm icon', 'data-delete': this.props.delete, onClick: this.props.handleDelete },
+				React.createElement('path', { className: 'symbol', d: 'M 2 12 L 13 27 L 40 4' })
+			);
+		}
+	});
+
+	var DenyIcon = React.createClass({
+		displayName: 'DenyIcon',
+
+		render: function () {
+			return React.createElement(
+				'svg',
+				{ className: 'deny icon' },
+				React.createElement('path', { className: 'symbol', d: 'M 3 3 L 38 38 M 38 3 L 3 38' })
+			);
+		}
+	});
+
 	//render comment date for United States.
 	var CommentDate = React.createClass({
 		displayName: 'CommentDate',
@@ -108,11 +132,11 @@
 	});
 
 	//dpost deletion confirmation
-	var Confirmation = React.createClass({
-		displayName: 'Confirmation',
+	var ConfirmationDelete = React.createClass({
+		displayName: 'ConfirmationDelete',
 
 		handleDelete: function (e) {
-			e.stopPropagation();
+			//e.stopPropagation();
 
 			if (e.target.getAttribute("data-delete") != null) {
 				if (this.props.onDelete) {
@@ -130,19 +154,44 @@
 				'div',
 				{ className: 'confirmation-holder' },
 				React.createElement(
-					'span',
-					null,
-					'Delete this post?'
+					'div',
+					{ className: 'button-confirm-delete icon', 'data-delete': '1', onClick: this.handleDelete },
+					React.createElement(ConfirmIcon, { 'delete': '1', onDelete: this.handleDelete })
 				),
 				React.createElement(
-					'button',
-					{ className: 'button-confirm-delete', 'data-delete': '1', onClick: this.handleDelete },
-					'Yes'
+					'div',
+					{ className: 'button-deny-delete icon', onClick: this.handleDelete },
+					React.createElement(DenyIcon, null)
+				)
+			);
+		}
+	});
+
+	var ConfirmationEdit = React.createClass({
+		displayName: 'ConfirmationEdit',
+
+		handleEdit: function (e) {
+			e.stopPropagation();
+
+			var className = $(e.target).hasClass("button-confirm-edit");
+
+			if (className && this.props.onEdit) {
+				this.props.onEdit();
+			}
+		},
+		render: function () {
+			return React.createElement(
+				'div',
+				{ className: 'confirmation-holder editor' },
+				React.createElement(
+					'div',
+					{ className: 'button-confirm-edit icon', 'data-delete': '1', onClick: this.handleEdit },
+					React.createElement(ConfirmIcon, null)
 				),
 				React.createElement(
-					'button',
-					{ className: 'button-deny-delete', onClick: this.handleDelete },
-					'No'
+					'div',
+					{ className: 'button-deny-edit icon', onClick: this.props.onDeny },
+					React.createElement(DenyIcon, null)
 				)
 			);
 		}
@@ -159,7 +208,9 @@
 				confirmDelete: false,
 				editingComment: false,
 				commentBody: null,
+				previousCommentBody: null,
 				hasReplies: false,
+				commentID: null,
 				showReplies: false,
 				authorLoggedIn: false
 			};
@@ -171,7 +222,11 @@
 			return { __html: rawMarkup };
 		},
 		toggleConfirm: function () {
-			this.setState({ confirmDelete: !this.state.confirmDelete });
+			this.setState({
+				confirmDelete: !this.state.confirmDelete,
+				editingComment: false
+
+			});
 		},
 		toggleReplies: function (e) {
 			this.setState({ showReplies: !this.state.showReplies });
@@ -180,9 +235,30 @@
 			e.stopPropagation();
 			this.toggleConfirm();
 		},
+		toggleEditing: function (e) {
+
+			if (typeof e != "undefined") {
+				if (typeof e.target != "undefined" && $(e.target).hasClass("button-deny-edit")) {
+					this.setState({ commentBody: this.state.previousCommentBody });
+				}
+			}
+
+			this.setState({
+				editingComment: !this.state.editingComment,
+				confirmDelete: false
+			});
+		},
+		showEditPanel: function () {
+			this.setState({ previousCommentBody: this.state.commentBody });
+			this.toggleEditing();
+		},
 		handleEdit: function (e) {
-			e.stopPropagation();
-			this.setState({ editingComment: !this.state.editingComment });
+			if (this.state.editingComment) {
+				if (this.props.onEdit) {
+					this.props.onEdit(this.state.commentID, this.state.commentBody);
+				}
+			}
+			this.toggleEditing();
 		},
 		componentWillMount: function () {
 
@@ -191,7 +267,9 @@
 			this.setState({
 				public: this.props.data.public,
 				delete: this.props.data.deleted,
+				previousCommentBody: this.props.data.comment,
 				commentBody: this.props.data.comment,
+				commentID: this.props.data.id,
 				authorLoggedIn: loggedin
 			});
 
@@ -206,46 +284,115 @@
 			}
 		},
 		commentFunctions: function (confirmer) {
+
+			if (this.state.editingComment) {
+				var editor = React.createElement(ConfirmationEdit, { onEdit: this.handleEdit, onDeny: this.toggleEditing });
+			}
+
+			var showEditPanelClass = "button-edit icon";
+			if (this.state.confirmDelete) {
+				showEditPanelClass += " slide-right";
+			}
+
 			return React.createElement(
 				'div',
 				{ className: 'comment-functions' },
 				React.createElement(
-					'button',
-					{ className: 'button-delete', onClick: this.handleDelete },
-					'Delete'
+					'div',
+					{ className: 'button-delete icon', onClick: this.handleDelete },
+					React.createElement(
+						'svg',
+						{ className: 'trashCanLid' },
+						React.createElement('path', { className: 'iconLines handle', d: 'M 8 4 L 8 1 L 16 1 L 16 4' }),
+						React.createElement('path', { className: 'iconLines lid', d: 'M 2 5 L 23 5 L 23 10 L 2 10 Z ' })
+					),
+					React.createElement(
+						'svg',
+						{ className: 'trashCanBottom' },
+						React.createElement('path', { className: 'iconLines can', d: 'M 1 1 L 20 1 L 20 18 L 1 18 Z' }),
+						React.createElement('path', { className: 'iconLines dent1', d: 'M 4.5 3 L 4.5 15' }),
+						React.createElement('path', { className: 'iconLines dent2', d: 'M 8.5 3 L 8.5 15' }),
+						React.createElement('path', { className: 'iconLines dent3', d: 'M 12.5 3 L 12.5 15' }),
+						React.createElement('path', { className: 'iconLines dent4', d: 'M 16.5 3 L 16.5 15' })
+					)
 				),
 				React.createElement(
-					'button',
-					{ className: 'button-edit', onClick: this.handleEdit },
-					!this.state.editingComment ? "Edit" : "Save"
+					'div',
+					{ className: showEditPanelClass, onClick: this.showEditPanel },
+					React.createElement(
+						'svg',
+						{ className: 'pencilHolder' },
+						React.createElement('path', { className: 'pencil', d: 'M 1 17 L 1 15 L 15 1 L 17 3 L 3.5 16.5 Z' })
+					),
+					React.createElement(
+						'svg',
+						{ className: 'paperHolder' },
+						React.createElement('path', { className: 'iconLines paper', d: 'M 1 1 L 18 1 L 18 22 L 1 22 Z' })
+					)
 				),
-				confirmer
+				confirmer,
+				editor
 			);
 		},
 		render: function () {
+
 			if (this.state.confirmDelete) {
-				var confirmer = React.createElement(Confirmation, { onDelete: this.props.onDelete, toggleConfirm: this.toggleConfirm, data: this.props.data });
+				var confirmer = React.createElement(ConfirmationDelete, { onDelete: this.props.onDelete, toggleConfirm: this.toggleConfirm, data: this.props.data });
 			}
 
 			var commentBody = React.createElement('div', { className: 'comment-body', dangerouslySetInnerHTML: this.parseMarkup(this.state.commentBody) });
+
 			if (this.state.editingComment) {
 				commentBody = React.createElement('textarea', { className: 'comment-body-edit', value: this.state.commentBody, onChange: this.handleEditComment });
 			}
 
+			var commentActionarea = null;
+			if (this.state.authorLoggedIn || this.state.hasReplies) {
+				commentActionarea = React.createElement(
+					'div',
+					{ className: 'comment-actions' },
+					React.createElement(
+						'div',
+						{ className: 'comment-actions-holder' },
+						this.state.authorLoggedIn ? this.commentFunctions(confirmer) : null,
+						this.state.hasReplies ? React.createElement(ShowCommentButtons, { clickHandler: this.toggleReplies }) : null
+					)
+				);
+			};
+
 			return React.createElement(
 				'div',
 				{ className: 'comment-holder' },
-				React.createElement(Author, { data: this.props.data }),
-				React.createElement(CommentDate, { datetime: this.props.data.datetime }),
-				commentBody,
-				this.state.authorLoggedIn ? this.commentFunctions(confirmer) : null,
-				this.state.hasReplies ? React.createElement(
-					'button',
-					{ className: 'button-show-replies', onClick: this.toggleReplies },
-					' ',
-					!this.state.showReplies ? "Show Comments" : "Hide Comments"
-				) : null,
-				this.state.showReplies ? React.createElement(CommentList, { cssClass: 'comments-replies-holder', comments: this.props.data.comments, loggedInID: this.props.loggedInID }) : null
+				React.createElement(
+					'div',
+					{ className: 'comment-line-area' },
+					React.createElement(
+						'svg',
+						{ className: 'comment-line-holder' },
+						React.createElement('path', { className: 'comment-line', d: 'M 1 15 L 15 1 L 3000 1' })
+					)
+				),
+				React.createElement(
+					'div',
+					{ className: 'comment-header-row' },
+					React.createElement(
+						'div',
+						{ className: 'comment-header-columns' },
+						React.createElement(
+							'span',
+							{ className: 'author-name-text-only' },
+							this.props.data.author
+						),
+						React.createElement(CommentDate, { datetime: this.props.data.datetime })
+					)
+				),
+				React.createElement(
+					'div',
+					{ className: 'comment-body-holder' },
+					commentBody,
+					commentActionarea,
+					this.state.showReplies ? React.createElement(CommentList, { cssClass: 'comments-replies-holder', onEdit: this.props.onEdit, onDelete: this.props.onDelete, comments: this.props.data.comments, loggedInID: this.props.loggedInID }) : null
+				)
 			);
 		}
 	});
@@ -259,28 +406,20 @@
 				comments: []
 			};
 		},
-		handleCommentClick: function (obj) {
-			var data = this.state.comments.slice();
-			var index = 0;
-			data.map((function (d) {
-				if (d.key == obj.id) {
-					data.splice(index, 1);
-					this.setState({ comments: data });
-				}
-				index++;
-			}).bind(this));
-		},
-		componentWillMount: function () {
-			var allComments = [];
-			this.props.comments.map((function (com) {
-				allComments.push(React.createElement(Comment, { data: com, onDelete: this.handleCommentClick, key: com.id, loggedInID: this.props.loggedInID }));
-			}).bind(this));
-
-			this.setState({ comments: allComments });
+		handleCommentClick: function (context) {
+			if (this.props.onDelete) {
+				this.props.onDelete(context);
+			}
 		},
 		render: function () {
-
 			var cssClass = "comments-holder";
+
+			var allComments = [];
+
+			this.props.comments.map((function (com) {
+				allComments.push(React.createElement(Comment, { data: com, onEdit: this.props.onEdit, onDelete: this.handleCommentClick, key: com.id, loggedInID: this.props.loggedInID }));
+			}).bind(this));
+
 			if (this.props.cssClass) {
 				cssClass = this.props.cssClass;
 			}
@@ -288,7 +427,7 @@
 			return React.createElement(
 				'div',
 				{ className: cssClass },
-				this.state.comments
+				allComments
 			);
 		}
 	});
@@ -368,11 +507,93 @@
 		getInitialState: function () {
 			return {
 				showComments: false,
-				showAuthorDetails: false
+				showAuthorDetails: false,
+				comments: null,
+				closer: null,
+				closerAnim: null
 			};
 		},
+		findCommentToEdit: function (id, body) {
+			var data = this.state.comments.slice();
+			var edited = false;
+
+			while (!edited) {
+				data.map(function (d) {
+					if (d.id === id) {
+						d.comment = body;
+						edited = true;
+					}
+
+					if (typeof d.comments != "undefined") {
+						var children = d.comments.slice();
+						children.map(function (c) {
+							if (c.id === id) {
+								c.comment = body;
+								edited = true;
+							}
+						});
+					}
+				});
+			}
+
+			this.setState({ comments: data });
+		},
+		findCommentToDelete: function (id, objs) {
+			var data = objs.slice();
+			var removed = false;
+			var index = 0;
+
+			data.map((function (d) {
+				if (d.id == id) {
+					data.splice(index, 1);
+					removed = data;
+				}
+				index++;
+			}).bind(this));
+
+			return removed;
+		},
+		handleRemoveElements: function (obj) {
+			var dataProcessed = false;
+
+			//superficial array search
+			dataProcessed = this.findCommentToDelete(obj.id, this.state.comments);
+
+			if (dataProcessed) {
+				this.setState({ comments: dataProcessed });
+				return;
+			} else {
+				var getChildComments = this.state.comments.slice();
+				for (var i in getChildComments) {
+					if (typeof getChildComments[i].comments != "undefined") {
+						var childProcessed = this.findCommentToDelete(obj.id, getChildComments[i].comments);
+
+						if (childProcessed) {
+							getChildComments[i].comments = childProcessed;
+							break;
+						}
+					}
+				}
+
+				this.setState({ comments: getChildComments });
+			}
+		},
+		closeComments: function () {
+			this.setState({
+				showComments: false,
+				closerAnim: null
+			});
+		},
 		showDetails: function () {
-			this.setState({ showComments: !this.state.showComments });
+			this.setState({
+				showComments: !this.state.showComments
+			});
+
+			if (this.state.comments == null) {
+				this.setState({
+					comments: this.props.topic.comments
+				});
+			}
 		},
 		render: function () {
 
@@ -385,18 +606,22 @@
 					React.createElement(Author, { data: this.props.topic }),
 					React.createElement(CommentDate, { datetime: this.props.topic.datetime }),
 					React.createElement(
-						'h1',
-						{ className: 'discussion-title' },
-						this.props.topic.title
-					),
-					React.createElement(
-						'h2',
-						{ className: 'discussion-subtitle' },
-						this.props.topic.discussion
+						'div',
+						{ className: 'discussionTitles' },
+						React.createElement(
+							'h1',
+							{ className: 'discussion-title' },
+							this.props.topic.title
+						),
+						React.createElement(
+							'h2',
+							{ className: 'discussion-subtitle' },
+							this.props.topic.discussion
+						)
 					),
 					React.createElement(ShowCommentButtons, { clickHandler: this.showDetails })
 				),
-				this.state.showComments ? React.createElement(CommentList, { comments: this.props.topic.comments, loggedInID: this.props.loggedInID }) : null
+				this.state.showComments ? React.createElement(CommentList, { onEdit: this.findCommentToEdit, onDelete: this.handleRemoveElements, hideClass: this.state.showComments, comments: this.state.comments, loggedInID: this.props.loggedInID }) : null
 			);
 		}
 	});
@@ -410,7 +635,6 @@
 		componentDidMount: function () {
 
 			$.get(this.props.url, (function (data) {
-
 				if (this.isMounted()) {
 					this.setState({ topics: data });
 				}
@@ -23795,7 +24019,7 @@
 	exports.push([module.id, "@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,700,300);", ""]);
 
 	// module
-	exports.push([module.id, "html {\n  box-sizing: border-box;\n}\n\n*, *::after, *::before {\n  box-sizing: inherit;\n}\n\n@font-face {\n  font-family: \"codropsicons\";\n  font-style: normal;\n  font-weight: normal;\n  src: url(\"/css/fonts/scodropsicons/codropsicons.eot?#iefix\") format(\"embedded-opentype\"), url(\"/css/fonts/scodropsicons/codropsicons.woff2\") format(\"woff2\"), url(\"/css/fonts/scodropsicons/codropsicons.woff\") format(\"woff\");\n}\n\n* {\n  box-sizing: border-box;\n  font-family: 'Roboto Condensed', sans-serif;\n  font-weight: 300;\n  font-size: 19.416px;\n  color: #383E4C;\n}\n\n*:focus {\n  outline: none;\n}\n\nbody {\n  background-color: #383E4C;\n}\n\nheader {\n  font-size: 40px;\n  margin: 20px 0px 0px;\n}\n\nheader, h1 {\n  color: #E25ABC;\n}\n\nh1, h2 {\n  margin: 0px;\n  padding: 0;\n  font-size: 30px;\n  line-height: 30px;\n}\n\nh1 {\n  padding-top: 10px;\n  padding-bottom: 5px;\n}\n\nbutton {\n  background: transparent;\n  cursor: pointer;\n  border: 0px solid red;\n}\n\n.container {\n  max-width: 90%;\n  margin-left: auto;\n  margin-right: auto;\n}\n\n.container::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n.comment-area {\n  max-width: 100%;\n  margin-left: auto;\n  margin-right: auto;\n  margin: 10px 0;\n  background-color: white;\n}\n\n.comment-area::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n.discussion, .comment-list, .comment-holder {\n  position: relative;\n  max-width: 100%;\n  margin-left: auto;\n  margin-right: auto;\n}\n\n.discussion::after, .comment-list::after, .comment-holder::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n.comment-holder {\n  border: 1px solid green;\n}\n\n.comments-replies-holder {\n  max-width: 100%;\n  margin-left: auto;\n  margin-right: auto;\n  border: 1px solid blue;\n}\n\n.comments-replies-holder::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n.comments-replies-holder .comment-holder {\n  margin-right: 0;\n  float: left;\n  display: block;\n  margin-right: 4.82916%;\n  width: 30.11389%;\n}\n\n.comments-replies-holder .comment-holder:last-child {\n  margin-right: 0;\n}\n\n.discussion .discussionHeader {\n  min-height: 95px;\n  position: relative;\n}\n\n.author-holder {\n  position: relative;\n  top: 10px;\n  margin: 0px 10px 10px;\n  width: 105px;\n  height: 70px;\n  float: left;\n}\n\n.author-holder .authorBubbleHolder {\n  width: 105px;\n  height: 70px;\n  position: absolute;\n  top: 0px;\n  left: 0px;\n}\n\n.author-holder .authorBubbleHolder .authorBubble {\n  fill: white;\n  stroke: #D6D6D6;\n  stroke-width: 5;\n}\n\n.author-holder .author-name {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  font-size: 16px;\n}\n\n.comment-date {\n  position: absolute;\n  top: 10px;\n  left: 100%;\n  min-width: 220px;\n  margin: 0px 0px 0px -220px;\n  padding-right: 10px;\n  text-align: right;\n}\n\n.button-show-comments {\n  position: absolute;\n  top: 100%;\n  left: 100%;\n  margin-top: -53px;\n  margin-left: -53px;\n  -webkit-transform: scale(1.15);\n  -moz-transform: scale(1.15);\n  -ms-transform: scale(1.15);\n  -o-transform: scale(1.15);\n  transform: scale(1.15);\n  width: 43px;\n  height: 43px;\n  overflow: hidden;\n}\n\n.button-show-comments span {\n  width: 90px;\n  height: 15px;\n  color: #E25ABC;\n  position: absolute;\n  top: 50%;\n  left: 0px;\n  margin-top: -7.5px;\n  margin-left: -90px;\n  border-left-style: solid;\n  border-color: #D6D6D6;\n  border-width: 2px;\n  clip: rect(0px 90px 15px 90px);\n  font-size: 12px;\n  line-height: 10px;\n  padding-top: 2px;\n  text-align: right;\n  -webkit-transition: clip 0.25s;\n  -moz-transition: clip 0.25s;\n  transition: clip 0.25s;\n}\n\n.button-show-comments .showIcon1Holder {\n  position: absolute;\n  top: 0;\n  left: 50%;\n  margin-top: 0px;\n  margin-left: -13.5px;\n  width: 27px;\n  height: 17px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.button-show-comments .showIcon1Holder.stack0 {\n  top: 50%;\n  -webkit-transform: translateY(-10px);\n  -moz-transform: translateY(-10px);\n  -ms-transform: translateY(-10px);\n  -o-transform: translateY(-10px);\n  transform: translateY(-10px);\n}\n\n.button-show-comments .showIcon1 {\n  fill: white;\n  stroke: #E25ABC;\n  stroke-width: 2;\n}\n\n.button-show-comments .showIcon2Holder {\n  width: 27px;\n  height: 10px;\n  position: absolute;\n  top: 0;\n  left: 50%;\n  margin-top: 0px;\n  margin-left: -13.5px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.button-show-comments .showIcon2Holder.stack1 {\n  top: 50%;\n  -webkit-transform: translateY(-2px);\n  -moz-transform: translateY(-2px);\n  -ms-transform: translateY(-2px);\n  -o-transform: translateY(-2px);\n  transform: translateY(-2px);\n}\n\n.button-show-comments .showIcon2Holder.stack2 {\n  top: 50%;\n  -webkit-transform: translateY(0px);\n  -moz-transform: translateY(0px);\n  -ms-transform: translateY(0px);\n  -o-transform: translateY(0px);\n  transform: translateY(0px);\n}\n\n.button-show-comments .showIcon2Holder.stack3 {\n  top: 50%;\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.button-show-comments .showIcon2 {\n  fill: transparent;\n  stroke: #E25ABC;\n  stroke-width: 2;\n}\n\n.button-show-comments:hover span {\n  clip: rect(0px 90px 15px 0px);\n}\n\n.button-show-comments:hover {\n  overflow: visible;\n}\n\n.button-show-comments:hover .showIcon1Holder.stack0 {\n  -webkit-transform: translateY(-15px);\n  -moz-transform: translateY(-15px);\n  -ms-transform: translateY(-15px);\n  -o-transform: translateY(-15px);\n  transform: translateY(-15px);\n}\n\n.button-show-comments:hover .showIcon2Holder.stack1 {\n  -webkit-transform: translateY(-3px);\n  -moz-transform: translateY(-3px);\n  -ms-transform: translateY(-3px);\n  -o-transform: translateY(-3px);\n  transform: translateY(-3px);\n}\n\n.button-show-comments:hover .showIcon2Holder.stack2 {\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.button-show-comments:hover .showIcon2Holder.stack3 {\n  -webkit-transform: translateY(7px);\n  -moz-transform: translateY(7px);\n  -ms-transform: translateY(7px);\n  -o-transform: translateY(7px);\n  transform: translateY(7px);\n}\n\n.button-show-comments.maximized .showIcon1Holder.stack0 {\n  -webkit-transform: translateY(-15px);\n  -moz-transform: translateY(-15px);\n  -ms-transform: translateY(-15px);\n  -o-transform: translateY(-15px);\n  transform: translateY(-15px);\n}\n\n.button-show-comments.maximized .showIcon2Holder.stack1 {\n  -webkit-transform: translateY(-3px);\n  -moz-transform: translateY(-3px);\n  -ms-transform: translateY(-3px);\n  -o-transform: translateY(-3px);\n  transform: translateY(-3px);\n}\n\n.button-show-comments.maximized .showIcon2Holder.stack2 {\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.button-show-comments.maximized .showIcon2Holder.stack3 {\n  -webkit-transform: translateY(7px);\n  -moz-transform: translateY(7px);\n  -ms-transform: translateY(7px);\n  -o-transform: translateY(7px);\n  transform: translateY(7px);\n}\n\n.button-show-comments.maximized:hover .showIcon1Holder.stack0 {\n  -webkit-transform: translateY(-10px);\n  -moz-transform: translateY(-10px);\n  -ms-transform: translateY(-10px);\n  -o-transform: translateY(-10px);\n  transform: translateY(-10px);\n}\n\n.button-show-comments.maximized:hover .showIcon2Holder.stack1 {\n  -webkit-transform: translateY(-2px);\n  -moz-transform: translateY(-2px);\n  -ms-transform: translateY(-2px);\n  -o-transform: translateY(-2px);\n  transform: translateY(-2px);\n}\n\n.button-show-comments.maximized:hover .showIcon2Holder.stack2 {\n  -webkit-transform: translateY(0px);\n  -moz-transform: translateY(0px);\n  -ms-transform: translateY(0px);\n  -o-transform: translateY(0px);\n  transform: translateY(0px);\n}\n\n.button-show-comments.maximized:hover .showIcon2Holder.stack3 {\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n", ""]);
+	exports.push([module.id, "html {\n  box-sizing: border-box;\n}\n\n*, *::after, *::before {\n  box-sizing: inherit;\n}\n\n@font-face {\n  font-family: \"codropsicons\";\n  font-style: normal;\n  font-weight: normal;\n  src: url(\"/css/fonts/scodropsicons/codropsicons.eot?#iefix\") format(\"embedded-opentype\"), url(\"/css/fonts/scodropsicons/codropsicons.woff2\") format(\"woff2\"), url(\"/css/fonts/scodropsicons/codropsicons.woff\") format(\"woff\");\n}\n\n* {\n  box-sizing: border-box;\n  font-family: 'Roboto Condensed', sans-serif;\n  font-weight: 300;\n  font-size: 19.416px;\n  color: #383E4C;\n}\n\n*:focus {\n  outline: none;\n}\n\nbody {\n  -webkit-backface-visibility: hidden;\n  -webkit-transform: translateZ(0);\n  background-color: #383E4C;\n}\n\nheader {\n  font-size: 40px;\n  margin: 20px 0px 15px;\n}\n\nheader, h1 {\n  color: #E25ABC;\n}\n\nh1, h2 {\n  margin: 0px;\n  padding: 0;\n  font-size: 30px;\n  line-height: 30px;\n}\n\nh1 {\n  padding-top: 10px;\n  padding-bottom: 5px;\n}\n\nbutton {\n  background: transparent;\n  cursor: pointer;\n  border: 0px solid red;\n}\n\n.container {\n  max-width: 90%;\n  margin-left: auto;\n  margin-right: auto;\n}\n\n.container::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n.comment-area {\n  position: relative;\n  max-width: 100%;\n  margin-left: auto;\n  margin-right: auto;\n  margin: 10px 0;\n  padding: 15px;\n  background-color: #F1F1F2;\n  -webkit-transition: all 1s;\n  -moz-transition: all 1s;\n  transition: all 1s;\n}\n\n.comment-area::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n.comment-area:before {\n  content: '';\n  width: 100%;\n  position: absolute;\n  top: -12px;\n  left: 0;\n  border-top: 12px solid #231F20;\n}\n\n.comment-area:after {\n  content: '';\n  width: 100%;\n  position: absolute;\n  top: 100%;\n  left: 0;\n  border-top: 7px solid #231F20;\n}\n\n.discussion, .comment-list, .comment-holder {\n  position: relative;\n  max-width: 100%;\n  margin-left: auto;\n  margin-right: auto;\n}\n\n.discussion::after, .comment-list::after, .comment-holder::after {\n  clear: both;\n  content: \"\";\n  display: table;\n}\n\n@-webkit-keyframes reveal {\n  from {\n    max-height: 0px;\n  }\n  to {\n    max-height: 10000px;\n  }\n}\n\n@-moz-keyframes reveal {\n  from {\n    max-height: 0px;\n  }\n  to {\n    max-height: 10000px;\n  }\n}\n\n@keyframes reveal {\n  from {\n    max-height: 0px;\n  }\n  to {\n    max-height: 10000px;\n  }\n}\n\n@-webkit-keyframes closer {\n  from {\n    max-height: 10000px;\n  }\n  to {\n    max-height: 0px;\n  }\n}\n\n@-moz-keyframes closer {\n  from {\n    max-height: 10000px;\n  }\n  to {\n    max-height: 0px;\n  }\n}\n\n@keyframes closer {\n  from {\n    max-height: 10000px;\n  }\n  to {\n    max-height: 0px;\n  }\n}\n\n.comments-holder {\n  max-height: 0px;\n  overflow: hidden;\n  -webkit-animation: reveal 2s ease-in;\n  -moz-animation: reveal 2s ease-in;\n  animation: reveal 2s ease-in;\n  -webkit-animation-fill-mode: forwards;\n  -moz-animation-fill-mode: forwards;\n  animation-fill-mode: forwards;\n  -webkit-animation-iteration-count: 1;\n  -moz-animation-iteration-count: 1;\n  animation-iteration-count: 1;\n}\n\n.comments-holder.hide {\n  -webkit-animation: closer 0.75s ease-out;\n  -moz-animation: closer 0.75s ease-out;\n  animation: closer 0.75s ease-out;\n  -webkit-animation-fill-mode: forwards;\n  -moz-animation-fill-mode: forwards;\n  animation-fill-mode: forwards;\n  -webkit-animation-iteration-count: 1;\n  -moz-animation-iteration-count: 1;\n  animation-iteration-count: 1;\n}\n\n.comment-holder {\n  width: 100%;\n  margin: 0px auto;\n  padding: 0px 20px 20px 25px;\n}\n\n.comment-holder textarea {\n  width: 100%;\n  margin-bottom: 10px;\n  min-height: 100px;\n  padding: 10px;\n}\n\n.comment-holder .author-holder {\n  -webkit-transform: scale(0.75);\n  -moz-transform: scale(0.75);\n  -ms-transform: scale(0.75);\n  -o-transform: scale(0.75);\n  transform: scale(0.75);\n  top: 0px;\n}\n\n.comment-holder .comment-header-row {\n  display: table;\n  width: 100%;\n  padding: 10px 0px 10px 25px;\n}\n\n.comment-holder .comment-header-columns {\n  display: table-row;\n  width: 100%;\n  -webkit-transition: all 0.5s;\n  -moz-transition: all 0.5s;\n  transition: all 0.5s;\n  margin-top: 0px;\n  margin-bottom: 10px;\n  border: 1px solid red;\n}\n\n.comment-holder .comment-header-columns .author-name-text-only {\n  color: #E25ABC;\n  font-weight: 700;\n}\n\n.comment-holder .comment-header-columns .author-holder {\n  top: -12px;\n  width: 50%;\n}\n\n.comment-holder .comment-header-columns .comment-date {\n  display: table-cell;\n  width: 50%;\n  color: #E25ABC;\n  padding: 0;\n  position: relative;\n  top: 0px;\n  left: 0px;\n  margin: 0px 0px 10px;\n}\n\n.comment-holder .comment-body-holder {\n  padding: 0px 0px 0px 25px;\n}\n\n.comment-holder .comment-body {\n  display: table;\n  width: 100%;\n  padding: 0px;\n}\n\n.comment-holder .comment-body p {\n  margin-top: 0px;\n  margin-bottom: 10px;\n}\n\n.comment-holder .comment-body strong {\n  font-weight: 700;\n}\n\n.comment-holder .comment-body em, .comment-holder .comment-body i {\n  font-style: italic;\n}\n\n.comment-holder .comment-actions {\n  display: table;\n  width: 100%;\n  height: 46px;\n  position: relative;\n  margin: 0px;\n}\n\n.comment-holder .comment-actions .comment-actions-holder {\n  display: table-row;\n  border: 1px solid blue;\n}\n\n.comment-holder .comment-actions .comment-actions-holder .button-edit {\n  display: table-cell;\n}\n\n.comment-holder .comment-actions .comment-actions-holder .button-delete {\n  display: table-cell;\n}\n\n@-webkit-keyframes wipe {\n  from {\n    clip: rect(0px 0px 43px 0px);\n  }\n  to {\n    clip: rect(0px 100px 43px 0px);\n  }\n}\n\n@-moz-keyframes wipe {\n  from {\n    clip: rect(0px 0px 43px 0px);\n  }\n  to {\n    clip: rect(0px 100px 43px 0px);\n  }\n}\n\n@keyframes wipe {\n  from {\n    clip: rect(0px 0px 43px 0px);\n  }\n  to {\n    clip: rect(0px 100px 43px 0px);\n  }\n}\n\n.comment-holder .comment-actions .comment-actions-holder .confirmation-holder {\n  position: absolute;\n  top: 0px;\n  left: 44px;\n  display: table-cell;\n  clip: rect(0px 0px 43px 0px);\n  -webkit-animation: wipe 0.25s ease-in;\n  -moz-animation: wipe 0.25s ease-in;\n  animation: wipe 0.25s ease-in;\n  -webkit-animation-fill-mode: forwards;\n  -moz-animation-fill-mode: forwards;\n  animation-fill-mode: forwards;\n  -webkit-animation-iteration-count: 1;\n  -moz-animation-iteration-count: 1;\n  animation-iteration-count: 1;\n}\n\n.comment-holder .comment-actions .comment-actions-holder .confirmation-holder.editor {\n  left: 86px;\n}\n\n.comment-holder .comment-actions .comment-actions-holder .confirmation-holder .button-confirm-delete, .comment-holder .comment-actions .comment-actions-holder .confirmation-holder .button-deny-delete {\n  display: table-cell;\n}\n\n.comment-holder .comment-actions .comment-actions-holder .confirmation-holder .button-confirm-edit, .comment-holder .comment-actions .comment-actions-holder .confirmation-holder .button-deny-edit {\n  display: table-cell;\n}\n\n.comment-holder .comment-actions .comment-actions-holder .button-show-comments {\n  top: 0px;\n  margin-top: 0px;\n  display: table-cell;\n}\n\n.comment-line-area {\n  width: 100%;\n  height: 15px;\n  overflow: hidden;\n  margin: 0px;\n}\n\n.comment-line-area .comment-line-holder {\n  width: 1824px;\n  height: 15px;\n}\n\n.comment-line-area .comment-line-holder .comment-line {\n  fill: none;\n  stroke: #D6D6D6;\n  stroke-width: 2;\n}\n\n.comments-replies-holder {\n  max-height: 0px;\n  overflow: hidden;\n  width: 100%;\n  margin: 0px auto;\n  padding: 10px 0px 0px;\n  -webkit-animation: reveal 2s ease-in;\n  -moz-animation: reveal 2s ease-in;\n  animation: reveal 2s ease-in;\n  -webkit-animation-fill-mode: forwards;\n  -moz-animation-fill-mode: forwards;\n  animation-fill-mode: forwards;\n  -webkit-animation-iteration-count: 1;\n  -moz-animation-iteration-count: 1;\n  animation-iteration-count: 1;\n}\n\n.comments-replies-holder.hide {\n  -webkit-animation: closer 0.75s ease-out;\n  -moz-animation: closer 0.75s ease-out;\n  animation: closer 0.75s ease-out;\n  -webkit-animation-fill-mode: forwards;\n  -moz-animation-fill-mode: forwards;\n  animation-fill-mode: forwards;\n  -webkit-animation-iteration-count: 1;\n  -moz-animation-iteration-count: 1;\n  animation-iteration-count: 1;\n}\n\n.comments-replies-holder.comment-holder {\n  margin: 0px 0px 10px;\n}\n\n.discussion {\n  background-color: white;\n  min-height: 95px;\n}\n\n.discussion .discussionHeader {\n  width: 100%;\n  min-height: 95px;\n  position: relative;\n  display: table;\n}\n\n.discussion .discussionHeader .discussionTitles {\n  display: table-cell;\n  padding: 0px 0px 0px 10px;\n}\n\n.discussion:after {\n  content: '';\n  position: absolute;\n  top: 100%;\n  width: 100%;\n  border-bottom: 2px solid #D6D6D6;\n}\n\n.author-holder {\n  position: relative;\n  top: 10px;\n  left: 10px;\n  margin: 0px 10px 10px;\n  width: 115px;\n  height: 70px;\n  display: table-cell;\n}\n\n.author-holder .authorBubbleHolder {\n  width: 115px;\n  height: 70px;\n  position: absolute;\n  top: 0px;\n  left: 0px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.author-holder .authorBubbleHolder .authorBubble {\n  fill: white;\n  stroke: #D6D6D6;\n  stroke-width: 5;\n}\n\n.author-holder .author-name {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  font-size: 16px;\n}\n\n.comment-date {\n  position: absolute;\n  top: 10px;\n  left: 100%;\n  min-width: 220px;\n  margin: 0px 0px 0px -220px;\n  padding-right: 10px;\n  text-align: right;\n}\n\n.button-show-comments {\n  position: absolute;\n  top: 94px;\n  left: 100%;\n  margin-top: -53px;\n  margin-left: -53px;\n  -webkit-transform: scale(1.15);\n  -moz-transform: scale(1.15);\n  -ms-transform: scale(1.15);\n  -o-transform: scale(1.15);\n  transform: scale(1.15);\n  width: 43px;\n  height: 43px;\n  overflow: hidden;\n}\n\n.button-show-comments span {\n  width: 90px;\n  height: 15px;\n  color: #E25ABC;\n  position: absolute;\n  top: 50%;\n  left: 0px;\n  margin-top: -7.5px;\n  margin-left: -90px;\n  border-left-style: solid;\n  border-color: #D6D6D6;\n  border-width: 2px;\n  clip: rect(0px 90px 15px 90px);\n  font-size: 12px;\n  line-height: 10px;\n  padding-top: 2px;\n  text-align: right;\n  -webkit-transition: clip 0.25s;\n  -moz-transition: clip 0.25s;\n  transition: clip 0.25s;\n}\n\n.button-show-comments .showIcon1Holder {\n  position: absolute;\n  top: 0;\n  left: 50%;\n  margin-top: 0px;\n  margin-left: -13.5px;\n  width: 27px;\n  height: 17px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.button-show-comments .showIcon1Holder.stack0 {\n  top: 50%;\n  -webkit-transform: translateY(-10px);\n  -moz-transform: translateY(-10px);\n  -ms-transform: translateY(-10px);\n  -o-transform: translateY(-10px);\n  transform: translateY(-10px);\n}\n\n.button-show-comments .showIcon1 {\n  fill: white;\n  stroke: #E25ABC;\n  stroke-width: 2;\n}\n\n.button-show-comments .showIcon2Holder {\n  width: 27px;\n  height: 10px;\n  position: absolute;\n  top: 0;\n  left: 50%;\n  margin-top: 0px;\n  margin-left: -13.5px;\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.button-show-comments .showIcon2Holder.stack1 {\n  top: 50%;\n  -webkit-transform: translateY(-2px);\n  -moz-transform: translateY(-2px);\n  -ms-transform: translateY(-2px);\n  -o-transform: translateY(-2px);\n  transform: translateY(-2px);\n}\n\n.button-show-comments .showIcon2Holder.stack2 {\n  top: 50%;\n  -webkit-transform: translateY(0px);\n  -moz-transform: translateY(0px);\n  -ms-transform: translateY(0px);\n  -o-transform: translateY(0px);\n  transform: translateY(0px);\n}\n\n.button-show-comments .showIcon2Holder.stack3 {\n  top: 50%;\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.button-show-comments .showIcon2 {\n  fill: transparent;\n  stroke: #E25ABC;\n  stroke-width: 2;\n}\n\n.button-show-comments:hover span {\n  clip: rect(0px 90px 15px 0px);\n}\n\n.button-show-comments:hover {\n  overflow: visible;\n}\n\n.button-show-comments:hover .showIcon1Holder.stack0 {\n  -webkit-transform: translateY(-15px);\n  -moz-transform: translateY(-15px);\n  -ms-transform: translateY(-15px);\n  -o-transform: translateY(-15px);\n  transform: translateY(-15px);\n}\n\n.button-show-comments:hover .showIcon2Holder.stack1 {\n  -webkit-transform: translateY(-3px);\n  -moz-transform: translateY(-3px);\n  -ms-transform: translateY(-3px);\n  -o-transform: translateY(-3px);\n  transform: translateY(-3px);\n}\n\n.button-show-comments:hover .showIcon2Holder.stack2 {\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.button-show-comments:hover .showIcon2Holder.stack3 {\n  -webkit-transform: translateY(7px);\n  -moz-transform: translateY(7px);\n  -ms-transform: translateY(7px);\n  -o-transform: translateY(7px);\n  transform: translateY(7px);\n}\n\n.button-show-comments.maximized .showIcon1Holder.stack0 {\n  -webkit-transform: translateY(-15px);\n  -moz-transform: translateY(-15px);\n  -ms-transform: translateY(-15px);\n  -o-transform: translateY(-15px);\n  transform: translateY(-15px);\n}\n\n.button-show-comments.maximized .showIcon2Holder.stack1 {\n  -webkit-transform: translateY(-3px);\n  -moz-transform: translateY(-3px);\n  -ms-transform: translateY(-3px);\n  -o-transform: translateY(-3px);\n  transform: translateY(-3px);\n}\n\n.button-show-comments.maximized .showIcon2Holder.stack2 {\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.button-show-comments.maximized .showIcon2Holder.stack3 {\n  -webkit-transform: translateY(7px);\n  -moz-transform: translateY(7px);\n  -ms-transform: translateY(7px);\n  -o-transform: translateY(7px);\n  transform: translateY(7px);\n}\n\n.button-show-comments.maximized:hover .showIcon1Holder.stack0 {\n  -webkit-transform: translateY(-10px);\n  -moz-transform: translateY(-10px);\n  -ms-transform: translateY(-10px);\n  -o-transform: translateY(-10px);\n  transform: translateY(-10px);\n}\n\n.button-show-comments.maximized:hover .showIcon2Holder.stack1 {\n  -webkit-transform: translateY(-2px);\n  -moz-transform: translateY(-2px);\n  -ms-transform: translateY(-2px);\n  -o-transform: translateY(-2px);\n  transform: translateY(-2px);\n}\n\n.button-show-comments.maximized:hover .showIcon2Holder.stack2 {\n  -webkit-transform: translateY(0px);\n  -moz-transform: translateY(0px);\n  -ms-transform: translateY(0px);\n  -o-transform: translateY(0px);\n  transform: translateY(0px);\n}\n\n.button-show-comments.maximized:hover .showIcon2Holder.stack3 {\n  -webkit-transform: translateY(2px);\n  -moz-transform: translateY(2px);\n  -ms-transform: translateY(2px);\n  -o-transform: translateY(2px);\n  transform: translateY(2px);\n}\n\n.icon {\n  width: 43px;\n  height: 43px;\n  position: relative;\n  border-right: 1px solid #D6D6D6;\n  cursor: pointer;\n}\n\n.icon .confirm, .icon .deny {\n  position: absolute;\n  left: 0px;\n  border: none;\n  pointer-events: none;\n}\n\n.icon .confirm .symbol, .icon .deny .symbol {\n  fill: transparent;\n  stroke: #231F20;\n  stroke-width: 6;\n}\n\n.icon .confirm {\n  top: 3px;\n  -webkit-transform: scale(0.75);\n  -moz-transform: scale(0.75);\n  -ms-transform: scale(0.75);\n  -o-transform: scale(0.75);\n  transform: scale(0.75);\n}\n\n.icon .confirm .symbol {\n  stroke: green;\n}\n\n.icon .deny {\n  -webkit-transform: scale(0.7);\n  -moz-transform: scale(0.7);\n  -ms-transform: scale(0.7);\n  -o-transform: scale(0.7);\n  transform: scale(0.7);\n}\n\n.icon .deny .symbol {\n  stroke: red;\n}\n\n.button-delete .trashCanLid {\n  width: 26px;\n  height: 13px;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  margin: 0px 0px 0px -13px;\n  -webkit-transform: translateY(-15px);\n  -moz-transform: translateY(-15px);\n  -ms-transform: translateY(-15px);\n  -o-transform: translateY(-15px);\n  transform: translateY(-15px);\n  -webkit-transition: -webkit-transform, 0.25s;\n  -moz-transition: -moz-transform, 0.25s;\n  transition: transform, 0.25s;\n  -webkit-transform-origin: left bottom;\n  -moz-transform-origin: left bottom;\n  -ms-transform-origin: left bottom;\n  -o-transform-origin: left bottom;\n  transform-origin: left bottom;\n}\n\n.button-delete:hover .trashCanLid {\n  -webkit-transform: translateY(-20px) rotate(-25deg);\n  -moz-transform: translateY(-20px) rotate(-25deg);\n  -ms-transform: translateY(-20px) rotate(-25deg);\n  -o-transform: translateY(-20px) rotate(-25deg);\n  transform: translateY(-20px) rotate(-25deg);\n}\n\n.button-delete .trashCanBottom {\n  width: 22px;\n  height: 21px;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  margin: -6px 0px 0px -11px;\n}\n\n@-webkit-keyframes drawing {\n  0% {\n    -webkit-transform: translateX(12px) translateY(3px);\n  }\n  20% {\n    -webkit-transform: translateX(28px) translateY(3px);\n  }\n  40% {\n    -webkit-transform: translateX(12px) translateY(7px);\n  }\n  60% {\n    -webkit-transform: translateX(28px) translateY(7px);\n  }\n  80% {\n    -webkit-transform: translateX(12px) translateY(11px);\n  }\n  100% {\n    -webkit-transform: translateX(28px) translateY(11px);\n  }\n}\n\n@-moz-keyframes drawing {\n  0% {\n    -moz-transform: translateX(12px) translateY(3px);\n  }\n  20% {\n    -moz-transform: translateX(28px) translateY(3px);\n  }\n  40% {\n    -moz-transform: translateX(12px) translateY(7px);\n  }\n  60% {\n    -moz-transform: translateX(28px) translateY(7px);\n  }\n  80% {\n    -moz-transform: translateX(12px) translateY(11px);\n  }\n  100% {\n    -moz-transform: translateX(28px) translateY(11px);\n  }\n}\n\n@keyframes drawing {\n  0% {\n    -webkit-transform: translateX(12px) translateY(3px);\n    -moz-transform: translateX(12px) translateY(3px);\n    -ms-transform: translateX(12px) translateY(3px);\n    -o-transform: translateX(12px) translateY(3px);\n    transform: translateX(12px) translateY(3px);\n  }\n  20% {\n    -webkit-transform: translateX(28px) translateY(3px);\n    -moz-transform: translateX(28px) translateY(3px);\n    -ms-transform: translateX(28px) translateY(3px);\n    -o-transform: translateX(28px) translateY(3px);\n    transform: translateX(28px) translateY(3px);\n  }\n  40% {\n    -webkit-transform: translateX(12px) translateY(7px);\n    -moz-transform: translateX(12px) translateY(7px);\n    -ms-transform: translateX(12px) translateY(7px);\n    -o-transform: translateX(12px) translateY(7px);\n    transform: translateX(12px) translateY(7px);\n  }\n  60% {\n    -webkit-transform: translateX(28px) translateY(7px);\n    -moz-transform: translateX(28px) translateY(7px);\n    -ms-transform: translateX(28px) translateY(7px);\n    -o-transform: translateX(28px) translateY(7px);\n    transform: translateX(28px) translateY(7px);\n  }\n  80% {\n    -webkit-transform: translateX(12px) translateY(11px);\n    -moz-transform: translateX(12px) translateY(11px);\n    -ms-transform: translateX(12px) translateY(11px);\n    -o-transform: translateX(12px) translateY(11px);\n    transform: translateX(12px) translateY(11px);\n  }\n  100% {\n    -webkit-transform: translateX(28px) translateY(11px);\n    -moz-transform: translateX(28px) translateY(11px);\n    -ms-transform: translateX(28px) translateY(11px);\n    -o-transform: translateX(28px) translateY(11px);\n    transform: translateX(28px) translateY(11px);\n  }\n}\n\n.button-edit {\n  -webkit-transition: all 0.25s;\n  -moz-transition: all 0.25s;\n  transition: all 0.25s;\n}\n\n.button-edit.slide-right {\n  -webkit-transform: translateX(86px);\n  -moz-transform: translateX(86px);\n  -ms-transform: translateX(86px);\n  -o-transform: translateX(86px);\n  transform: translateX(86px);\n}\n\n.button-edit:hover .pencilHolder {\n  -webkit-animation-fill-mode: forwards, backwards;\n  -moz-animation-fill-mode: forwards, backwards;\n  animation-fill-mode: forwards, backwards;\n  -webkit-animation: drawing 2s;\n  -moz-animation: drawing 2s;\n  animation: drawing 2s;\n  -webkit-animation-iteration-count: infinite;\n  -moz-animation-iteration-count: infinite;\n  animation-iteration-count: infinite;\n}\n\n.button-edit .pencilHolder {\n  width: 18px;\n  height: 18px;\n  position: absolute;\n  -webkit-transform: translateX(15px) translateY(5px);\n  -moz-transform: translateX(15px) translateY(5px);\n  -ms-transform: translateX(15px) translateY(5px);\n  -o-transform: translateX(15px) translateY(5px);\n  transform: translateX(15px) translateY(5px);\n}\n\n.button-edit .pencilHolder .pencil {\n  fill: #231F20;\n}\n\n.button-edit .paperHolder {\n  width: 20px;\n  height: 24px;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  margin-top: -10px;\n  margin-left: -10px;\n}\n\n.iconLines {\n  width: 2px;\n  height: 19px;\n  fill: transparent;\n  stroke: #231F20;\n  stroke-width: 2;\n  position: absolute;\n}\n\n.iconLines.can {\n  width: 20px;\n  height: 19px;\n}\n\n.iconLines.handle {\n  width: 10px;\n  height: 4px;\n  top: -20px;\n}\n\n.iconLines.lid {\n  width: 24px;\n  height: 6px;\n  top: 4px;\n}\n", ""]);
 
 	// exports
 

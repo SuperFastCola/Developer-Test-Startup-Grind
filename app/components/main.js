@@ -20,6 +20,27 @@ var Author = React.createClass({
 	}
 });
 
+var ConfirmIcon = React.createClass({
+	render: function(){
+		return (
+			<svg className="confirm icon" data-delete={this.props.delete} onClick={this.props.handleDelete} >
+				<path className="symbol" d="M 2 12 L 13 27 L 40 4" />
+			</svg>
+		);
+	}
+});
+
+var DenyIcon = React.createClass({
+	render: function(){
+		return (
+			<svg className="deny icon">
+				<path className="symbol" d="M 3 3 L 38 38 M 38 3 L 3 38" />
+			</svg>
+		);
+	}
+});
+
+
 //render comment date for United States.
 var CommentDate = React.createClass({
 	render: function(){
@@ -52,9 +73,9 @@ var CommentDate = React.createClass({
 })
 
 //dpost deletion confirmation
-var Confirmation = React.createClass({
+var ConfirmationDelete = React.createClass({
 	handleDelete: function(e){
-		e.stopPropagation();
+		//e.stopPropagation();
 
 		if(e.target.getAttribute("data-delete")!=null){
 			if(this.props.onDelete){
@@ -71,9 +92,36 @@ var Confirmation = React.createClass({
 	render: function(){
 		return (
 			<div className="confirmation-holder">
-				<span>Delete this post?</span>
-				<button className="button-confirm-delete" data-delete="1" onClick={this.handleDelete}>Yes</button>
-				<button className="button-deny-delete" onClick={this.handleDelete}>No</button>
+				<div className="button-confirm-delete icon" data-delete="1" onClick={this.handleDelete}>
+					<ConfirmIcon delete="1" onDelete={this.handleDelete} />
+				</div>
+				<div className="button-deny-delete icon" onClick={this.handleDelete}>
+					<DenyIcon />
+				</div>
+			</div>
+		);
+	}
+});
+
+var ConfirmationEdit = React.createClass({
+	handleEdit: function(e){
+		e.stopPropagation();
+
+		var className = $(e.target).hasClass("button-confirm-edit");
+
+		if(className && this.props.onEdit){
+			this.props.onEdit();
+		}
+  	},
+	render: function(){
+		return (
+			<div className="confirmation-holder editor">
+				<div className="button-confirm-edit icon" data-delete="1" onClick={this.handleEdit}>
+					<ConfirmIcon />
+				</div>
+				<div className="button-deny-edit icon" onClick={this.props.onDeny}>
+					<DenyIcon />
+				</div>
 			</div>
 		);
 	}
@@ -89,7 +137,9 @@ var Comment = React.createClass({
 			confirmDelete: false,
 			editingComment: false,
 			commentBody: null,
+			previousCommentBody: null,
 			hasReplies: false,
+			commentID: null,
 			showReplies: false,
 			authorLoggedIn: false 
 		};
@@ -101,7 +151,11 @@ var Comment = React.createClass({
     	return { __html: rawMarkup };
   	},
   	toggleConfirm: function(){
-  		this.setState({confirmDelete: !this.state.confirmDelete });
+  		this.setState({
+  			confirmDelete: !this.state.confirmDelete,
+  			editingComment: false 
+
+  		});
   	},
   	toggleReplies: function(e){
 		this.setState({showReplies: !this.state.showReplies }); 
@@ -110,9 +164,31 @@ var Comment = React.createClass({
   		e.stopPropagation();
   		this.toggleConfirm();
   	},
+  	toggleEditing: function(e){
+
+  		if(typeof e != "undefined"){
+  			if(typeof e.target != "undefined" && $(e.target).hasClass("button-deny-edit")){
+  				this.setState({commentBody: this.state.previousCommentBody});
+  			}
+  		}
+
+  		this.setState({
+  			editingComment: !this.state.editingComment,
+  			confirmDelete: false
+  		}); 
+
+  	},
+  	showEditPanel: function(){
+  		this.setState({previousCommentBody: this.state.commentBody});
+  		this.toggleEditing();
+  	},
   	handleEdit: function(e){
-  		e.stopPropagation();
-  		this.setState({editingComment: !this.state.editingComment });  		
+  		if(this.state.editingComment){
+	  		if(this.props.onEdit){
+	  			this.props.onEdit(this.state.commentID,this.state.commentBody);
+	  		}
+  		}
+  		this.toggleEditing(); 		
   	},
   	componentWillMount: function(){
 
@@ -121,7 +197,9 @@ var Comment = React.createClass({
   		this.setState({
   			public:this.props.data.public,
   			delete:this.props.data.deleted,
+  			previousCommentBody: this.props.data.comment,
   			commentBody: this.props.data.comment,
+  			commentID: this.props.data.id,
   			authorLoggedIn: loggedin
   		});
 
@@ -138,33 +216,85 @@ var Comment = React.createClass({
 
   	},
   	commentFunctions: function(confirmer){
+
+  		if(this.state.editingComment){
+			var editor = <ConfirmationEdit onEdit={this.handleEdit} onDeny={this.toggleEditing} />;
+		}
+
+		var showEditPanelClass = "button-edit icon";
+		if(this.state.confirmDelete){
+			showEditPanelClass += " slide-right";
+		}
+
   		return (
   			<div className="comment-functions">
-				<button className="button-delete" onClick={this.handleDelete} >Delete</button>
-				<button className="button-edit" onClick={this.handleEdit} >{ !this.state.editingComment ? "Edit" : "Save" }</button>
+				<div className="button-delete icon" onClick={this.handleDelete} >
+					<svg className="trashCanLid">
+						<path className="iconLines handle" d="M 8 4 L 8 1 L 16 1 L 16 4"  />
+						<path className="iconLines lid" d="M 2 5 L 23 5 L 23 10 L 2 10 Z "  />
+					</svg>
+					<svg className="trashCanBottom">
+						<path className="iconLines can" d="M 1 1 L 20 1 L 20 18 L 1 18 Z" />
+						<path className="iconLines dent1" d="M 4.5 3 L 4.5 15" />
+						<path className="iconLines dent2" d="M 8.5 3 L 8.5 15" />
+						<path className="iconLines dent3" d="M 12.5 3 L 12.5 15" />
+						<path className="iconLines dent4" d="M 16.5 3 L 16.5 15" />
+					</svg>
+				</div>
+				<div className={showEditPanelClass} onClick={this.showEditPanel} >
+					<svg className="pencilHolder">
+						<path className="pencil" d="M 1 17 L 1 15 L 15 1 L 17 3 L 3.5 16.5 Z" />
+					</svg>
+					<svg className="paperHolder">
+						<path className="iconLines paper" d="M 1 1 L 18 1 L 18 22 L 1 22 Z" />
+					</svg>
+				</div>
 				{confirmer}
+				{editor}
 			</div>
 		);
   	},
 	render: function(){		
+
 		if(this.state.confirmDelete){
-			var confirmer = <Confirmation onDelete={this.props.onDelete} toggleConfirm={this.toggleConfirm} data={this.props.data} />;
+			var confirmer = <ConfirmationDelete onDelete={this.props.onDelete} toggleConfirm={this.toggleConfirm} data={this.props.data} />;
 		}
 
 		var commentBody = <div className="comment-body" dangerouslySetInnerHTML={this.parseMarkup(this.state.commentBody)} />;
+
 		if(this.state.editingComment){
 			commentBody = <textarea className="comment-body-edit" value={this.state.commentBody} onChange={this.handleEditComment} />
 		}
 
+		var commentActionarea = null;
+		if(this.state.authorLoggedIn || this.state.hasReplies){
+			commentActionarea = (<div className="comment-actions"><div className="comment-actions-holder">
+						{ this.state.authorLoggedIn ? this.commentFunctions(confirmer) :  null }
+						{this.state.hasReplies ? <ShowCommentButtons clickHandler={this.toggleReplies} /> : null }
+					</div>
+				</div>)
+		};
+
+
 		return (
 
 			<div className="comment-holder">
-				<Author data={this.props.data} /> 
-				<CommentDate datetime={this.props.data.datetime} />
-				{commentBody}
-				{ this.state.authorLoggedIn ? this.commentFunctions(confirmer) :  null }
-				{this.state.hasReplies ? <button className="button-show-replies" onClick={this.toggleReplies} > { !this.state.showReplies ? "Show Comments" : "Hide Comments" }</button> : null }
-				{ this.state.showReplies ? <CommentList cssClass="comments-replies-holder" comments={this.props.data.comments} loggedInID={this.props.loggedInID} /> : null }
+				<div className="comment-line-area">
+					<svg className="comment-line-holder">
+						<path className="comment-line" d="M 1 15 L 15 1 L 3000 1" />
+					</svg>
+				</div>
+				<div className="comment-header-row">
+					<div className="comment-header-columns">
+						<span className="author-name-text-only">{this.props.data.author}</span>
+						<CommentDate datetime={this.props.data.datetime} />
+					</div>	
+				</div>
+				<div className="comment-body-holder">
+					{commentBody}
+					{commentActionarea}				
+					{ this.state.showReplies ? <CommentList cssClass="comments-replies-holder" onEdit={this.props.onEdit} onDelete={this.props.onDelete} comments={this.props.data.comments} loggedInID={this.props.loggedInID} /> : null }
+				</div>
 			</div>
 		);
 	}
@@ -177,35 +307,27 @@ var CommentList = React.createClass({
 			comments: []
 		};
 	},
-	handleCommentClick: function(obj){
-		var data = this.state.comments.slice();
-		var index = 0;
-		data.map(function(d){
-			if(d.key==obj.id){
-				data.splice(index,1);
-				this.setState({comments:data});
-			}
-			index++;
-		}.bind(this));
-	},
-	componentWillMount: function(){
-		var allComments = [];
-		this.props.comments.map(function(com){
-			allComments.push(<Comment data={com} onDelete={this.handleCommentClick}  key={com.id} loggedInID={this.props.loggedInID} />)
-		}.bind(this));
-
-		this.setState({comments:allComments});
+	handleCommentClick: function(context){	
+		if(this.props.onDelete){
+			this.props.onDelete(context);
+		}
 	},
 	render: function(){
-
 		var cssClass="comments-holder";
+
+		var allComments = [];
+
+		this.props.comments.map(function(com){
+			allComments.push(<Comment data={com} onEdit={this.props.onEdit} onDelete={this.handleCommentClick}  key={com.id} loggedInID={this.props.loggedInID} />)
+		}.bind(this));
+
 		if(this.props.cssClass){
 			cssClass = this.props.cssClass;
 		}
 
 		return (
 			<div className={cssClass}>
-				{this.state.comments}
+				{allComments}
 			</div>
 		);
 	}
@@ -273,11 +395,97 @@ var Discussion = React.createClass({
 	getInitialState: function(){
 		return {
 			showComments: false,
-			showAuthorDetails: false
+			showAuthorDetails: false,
+			comments: null,
+			closer: null,
+			closerAnim: null,
 		};
 	},
+	findCommentToEdit: function(id,body){		
+		var data = this.state.comments.slice();
+		var edited = false;
+
+		while(!edited){
+			data.map(function(d){
+				if(d.id===id){
+					d.comment = body;
+					edited = true;
+				}
+
+				if(typeof d.comments != "undefined"){
+					var children = d.comments.slice();
+					children.map(function(c){
+						if(c.id===id){
+							c.comment = body;
+							edited = true;
+						}
+					});
+				}
+
+			});
+		}
+
+		this.setState({comments:data});
+
+	},
+	findCommentToDelete: function(id,objs){
+		var data = objs.slice();
+		var removed = false;
+		var index = 0;
+
+		data.map(function(d){
+			if(d.id==id){
+				data.splice(index,1);
+				removed = data;
+			}
+			index++;
+		}.bind(this));
+
+		return removed;
+	},
+	handleRemoveElements: function(obj){
+		var dataProcessed = false;
+
+		//superficial array search
+		dataProcessed = this.findCommentToDelete(obj.id,this.state.comments);	
+		
+		if(dataProcessed){
+			this.setState({comments:dataProcessed});
+			return;
+		}else{
+			var getChildComments = this.state.comments.slice();			
+			for(var i in getChildComments){
+				if(typeof getChildComments[i].comments != "undefined"){
+					var childProcessed = this.findCommentToDelete(obj.id,getChildComments[i].comments);
+
+					if(childProcessed){
+						getChildComments[i].comments = childProcessed;
+						break;
+					}
+				}
+			}
+
+			this.setState({comments:getChildComments});
+		}
+
+
+	},
+	closeComments: function(){
+		this.setState({ 
+			showComments: false,
+			closerAnim: null
+		});
+	},
 	showDetails: function(){
-		 this.setState({ showComments: !this.state.showComments });
+		this.setState({
+			showComments : !this.state.showComments
+		});
+
+		 if(this.state.comments==null){
+		 	this.setState({
+		 		comments: this.props.topic.comments
+		 	});
+		 }
 	},
 	render: function(){
 
@@ -286,11 +494,13 @@ var Discussion = React.createClass({
 	        	<div className="discussionHeader">
 		        	<Author data={this.props.topic} /> 
 		        	<CommentDate datetime={this.props.topic.datetime} />
-		        	<h1 className="discussion-title">{this.props.topic.title}</h1>
-		        	<h2 className="discussion-subtitle">{this.props.topic.discussion}</h2>
+		        	<div className="discussionTitles">
+		        		<h1 className="discussion-title">{this.props.topic.title}</h1>
+		        		<h2 className="discussion-subtitle">{this.props.topic.discussion}</h2>
+		        	</div>
 		        	<ShowCommentButtons clickHandler={this.showDetails} />
 		        </div>
-	        	{ this.state.showComments ? <CommentList comments={this.props.topic.comments} loggedInID={this.props.loggedInID} /> : null }
+	        	{ this.state.showComments ? <CommentList onEdit={this.findCommentToEdit} onDelete={this.handleRemoveElements} hideClass={this.state.showComments} comments={this.state.comments} loggedInID={this.props.loggedInID} /> : null }
 	        </section>
 	      );
 	}
@@ -303,7 +513,6 @@ var CommentArea = React.createClass({
 	componentDidMount: function() {
 
 		$.get(this.props.url, function(data){
-
 			if(this.isMounted()){
 				this.setState({topics:data});
 			}

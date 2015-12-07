@@ -6,6 +6,7 @@
 $magenta: #E25ABC;
 $bluegray: #383E4C;
 $linegray: #D6D6D6;
+$darkgray: #231F20;
 $modular-scale-ratio: $golden;
 $modular-scale-base: 12px;
 
@@ -27,12 +28,14 @@ $modular-scale-base: 12px;
 }
 
 body{
+	 -webkit-backface-visibility: hidden;
+	 -webkit-transform: translateZ(0);
 	background-color: $bluegray;
 }
 
 header{
 	font-size: 40px;
-	@include margin(20px 0px 0px 0px);
+	@include margin(20px 0px 15px 0px);
 }
 
 header,h1{
@@ -61,9 +64,31 @@ button{
 }
 
 .comment-area{
+	$capadd: 15px;
+	position: relative;
 	@include outer-container(100%);
 	@include margin(10px 0);
-	background-color: white;
+	@include padding($capadd);
+	background-color: #F1F1F2;
+
+	@include transition(all 1s);
+	
+	&:before{
+		$bdrh: 12px;
+
+		content: '';
+		width: 100%;
+		@include position(absolute, (-($bdrh)) null null 0);
+		border-top: $bdrh solid $darkgray;
+	}
+
+	&:after{
+		content: '';
+		width: 100%;
+		@include position(absolute, 100% null null 0);
+		border-top: 7px solid $darkgray;
+	}
+
 }
 
 .discussion, .comment-list,.comment-holder{
@@ -71,44 +96,265 @@ button{
 	 @include outer-container(100%);
 }
 
+@include keyframes(reveal) {
+  from {
+    max-height: 0px;
+  }
+  to {
+   	max-height: 10000px;
+  }
+}
+
+@include keyframes(closer) {
+  from {
+    max-height: 10000px;
+  }
+  to {
+   	max-height: 0px;
+  }
+}
+
+
+
+.comments-holder{			
+	max-height: 0px;
+	overflow: hidden;
+	@include animation(reveal 2.0s ease-in);
+	@include animation-fill-mode(forwards);
+	@include animation-iteration-count(1);
+
+	&.hide{
+		@include animation(closer .75s ease-out);
+		@include animation-fill-mode(forwards);
+		@include animation-iteration-count(1);		
+	}
+}
+
 .comment-holder{
-	@include bdr(1px, green);
+	width: 100%;
+	@include margin(0px auto 0px auto);
+	@include padding(0px 20px 20px 25px);
+
+	textarea{
+		width: 100%;
+		margin-bottom: 10px;
+		min-height: 100px;
+		@include padding(10px);
+	}
+
+	.author-holder{
+		@include transform(scale(.75));
+		top: 0px;
+	}
+
+	.comment-header-row{
+		display: table;	
+		width: 100%;
+		@include padding(10px 0px 10px 25px);
+
+	}
+
+	.comment-header-columns{
+		display: table-row;	
+		width: 100%;
+		@include transition(all .5s);
+		@include margin(0px null 10px null);
+		@include bdr;
+
+		.author-name-text-only{
+			color: $magenta;
+			font-weight: 700;
+		}
+
+		.author-holder{
+			top: -12px;
+			width: 50%;
+		}
+
+		.comment-date{
+			display: table-cell;
+			width: 50%;
+			color: $magenta;
+			@include padding(0);
+			@include position(relative, 0px null null 0px);
+			@include margin(0px 0px 10px 0px);
+		}
+	}
+
+	.comment-body-holder{
+		@include padding(0px 0px 0px 25px);
+	}
+
+	.comment-body{
+		display: table;
+		width: 100%;
+		@include padding(0px 0px 0px 0px);
+		
+		p{
+			@include margin(0px null 10px null);
+		}
+
+		strong{
+			font-weight: 700;
+		}
+
+		em,i{
+			font-style: italic;
+		}
+
+
+	}
+
+	.comment-actions{
+		display: table;	
+		width: 100%;
+		height: 46px;
+		position: relative;
+		@include margin(0px);
+
+		.comment-actions-holder{
+			display: table-row;
+			@include bdr(1px,blue);
+
+			.button-edit{
+				display: table-cell;
+			}
+
+			.button-delete{
+				display: table-cell;
+			}
+
+			@include keyframes(wipe) {
+			  from {
+			    clip: rect(0px 0px 43px 0px);
+			  }
+			  to {
+			    clip: rect(0px 100px 43px 0px);
+			  }
+			}
+
+			.confirmation-holder{
+				@include position(absolute, 0px null null 44px)
+				display: table-cell;
+				clip: rect(0px 0px 43px 0px);
+
+				@include animation(wipe .25s ease-in);
+				@include animation-fill-mode(forwards);
+				@include animation-iteration-count(1);
+
+
+				&.editor{
+					left: 86px;
+
+				}
+
+				.button-confirm-delete,.button-deny-delete{
+					display: table-cell;
+				}
+
+				.button-confirm-edit,.button-deny-edit{
+					display: table-cell;
+				}
+
+			}
+			
+
+			.button-show-comments{
+				top: 0px;
+				margin-top: 0px;
+				display: table-cell;
+			}
+		}
+	}	
+}
+
+.comment-line-area{
+	width: 100%;
+	height: 15px;
+	overflow: hidden;
+	@include margin(0px);
+
+	.comment-line-holder{
+		width: 1824px;
+		height: 15px;
+
+		.comment-line{
+			fill: none;
+			stroke: $linegray;
+			stroke-width: 2;
+		}
+	}
 }
 
 .comments-replies-holder{
-	@include outer-container(100%);
-	@include bdr(1px, blue);	
+	max-height: 0px;
+	overflow: hidden;
+	width: 100%;
+	@include margin(0px auto 0px auto);
+	@include padding(10px 0px 0px 0px);
 
-	.comment-holder{
-		 @include omega;
-		 @include span-columns(2 of 6);
+	@include animation(reveal 2.0s ease-in);
+	@include animation-fill-mode(forwards);
+	@include animation-iteration-count(1);
+
+	&.hide{
+		@include animation(closer .75s ease-out);
+		@include animation-fill-mode(forwards);
+		@include animation-iteration-count(1);		
+	}
+
+	&.comment-holder{
+		@include margin(0px 0px 10px 0px);
 	}
 }
 
 
 .discussion{
+	background-color: white;
+	min-height: 95px;
 
-	background-color: #F1F1F2;
 	.discussionHeader{
+		width: 100%;
 		min-height: 95px;
 		@include position(relative);	
+		display: table;
+
+		.discussionTitles{
+			display: table-cell;
+			@include padding(0px 0px 0px 10px);
+		}
+	}
+
+	&:after{
+		content: '';
+		@include position(absolute, 100% null null null);
+		width: 100%;
+		border-bottom: 2px solid $linegray;
 	}
 
 }
 
 .author-holder{
-	$size: 105px;
+	$size: 115px;
 	$h: 70px;
-	@include position(relative, 10px null null null);
+	@include position(relative, 10px null null 10px);
 	@include margin(0px 10px 10px 10px);
 	width: $size;
 	height: $h;
-	float: left;
+	display: table-cell;
 
 	.authorBubbleHolder{
 		width: $size;
 		height: $h;
 		@include position(absolute, 0px null null 0px);
+		// @include perspective(800px);
+		// @include perspective-origin(0% 0%);
+		// @include transform-style(preserve-3d);
+		@include transition(all .25s);
+
+		&:hover{
+			///@include transform(rotateY(-25deg) rotateX(-25deg));
+		}
 
 		.authorBubble{
 			fill: white;
@@ -122,6 +368,7 @@ button{
 		font-size: 16px;
 	}
 }
+
 
 .comment-date{
 	@include position(absolute,10px null null 100%);
@@ -137,8 +384,9 @@ button{
 	$spanheight: 15px;
 
 	$scaleAdjust: 10px;
-	$position: 100%;
-	@include position(absolute, $position null null $position);
+	$topPosition: 94px;
+	$leftPosition: 100%;
+	@include position(absolute, $topPosition null null $leftPosition);
 	@include margin( (-($size + $scaleAdjust)) null null (-($size + $scaleAdjust)));
 	@include transform(scale(1.15));
 	width: $size;
@@ -303,7 +551,171 @@ button{
 		}
 	}
 
+}
+
+.icon{
+	width: 43px;
+	height: 43px;
+	position: relative;
+	border-right: 1px solid $linegray;
+	cursor: pointer;
+
+	.confirm,.deny{
+		position: absolute;	
+		left: 0px;
+		border: none;
+		pointer-events: none;
+
+		.symbol{
+			fill: transparent;
+			stroke: $darkgray;
+			stroke-width: 6;
+		}
+	}
+
+	.confirm{
+		top: 3px;
+		@include transform(scale(.75));
+		.symbol{
+			stroke: green;
+		}
+	}
+
+	.deny{
+		@include transform(scale(.7));
+		.symbol{
+			stroke: red;
+		}
+	}
+}
+
+.button-delete{
+
+	.trashCanLid{
+		$w: 26px;
+		$h: 13px;
+		width: $w;
+		height: $h;
+		@include position(absolute, 50% null null 50%);
+		@include margin(0px 0px 0px (-($w/2)));
+		@include transform(translateY(-15px));
+		@include transition(transform,.25s);
+		@include transform-origin(left bottom);
+	}
+
+	&:hover{
+		.trashCanLid{
+			@include transform(translateY(-20px) rotate(-25deg));
+		}
+	}
+
+	.trashCanBottom{
+		$w: 22px;
+		$h: 21px;
+		width: $w;
+		height: $h;
+		@include position(absolute, 50% null null 50%);
+		@include margin(-6px 0px 0px (-($w/2)));
+	}
+}
 
 
+@include keyframes(drawing) {
+
+	$row1: 3px;
+	$row2: 7px;
+	$row3: 11px;
+	$column1: 12px;
+	$column2: 28px;
+
+	0%{
+		@include transform(translateX($column1) translateY($row1));
+	}
+
+	20%{
+		@include transform(translateX($column2) translateY($row1));
+	}
+
+	40%{
+		@include transform(translateX($column1) translateY($row2));
+	}
+
+	60%{
+		@include transform(translateX($column2) translateY($row2));
+	}
+
+	80%{
+		@include transform(translateX($column1) translateY($row3));
+	}
+
+	100%{
+		@include transform(translateX($column2) translateY($row3));
+	}
+ 
+
+}
+
+.button-edit{
+
+	@include transition(all .25s);
+
+	&.slide-right{
+		@include transform(translateX(86px));
+	}
+
+	&:hover{
+		.pencilHolder{
+			@include animation-fill-mode(forwards, backwards);
+			@include animation(drawing 2s);
+			@include animation-iteration-count(infinite);	
+		}
+	}	
+
+	.pencilHolder{
+		width: 18px;
+		height: 18px;
+		@include position(absolute);
+		@include transform(translateX(15px) translateY(5px));
+
+		.pencil{
+			fill: $darkgray;
+		}
+
+	}
+
+	.paperHolder{
+		width: 20px;
+		height: 24px;
+		@include position(absolute, 50% null null 50%);
+		@include margin(-10px null null -10px);
+
+	}	
+}
+
+.iconLines{
+	width: 2px;
+	height: 19px;
+
+	fill: transparent;
+	stroke: $darkgray;
+	stroke-width: 2;
+	position: absolute;
+
+	&.can{
+		width: 20px;
+		height: 19px;
+	}
+
+	&.handle{
+		width: 10px;
+		height: 4px;
+		top: -20px;
+	}
+
+	&.lid{
+		width: 24px;
+		height: 6px;
+		top: 4px;
+	}
 
 }
