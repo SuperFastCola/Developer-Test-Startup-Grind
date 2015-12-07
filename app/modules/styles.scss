@@ -264,9 +264,12 @@ button{
 				margin-top: 0px;
 				display: table-cell;
 			}
+
 		}
 	}	
 }
+
+
 
 .comment-line-area{
 	width: 100%;
@@ -313,6 +316,10 @@ button{
 	background-color: white;
 	min-height: 95px;
 
+	// *{
+	// 	@include bdr;
+	// }
+
 	.discussionHeader{
 		width: 100%;
 		min-height: 95px;
@@ -323,6 +330,25 @@ button{
 			display: table-cell;
 			@include padding(0px 0px 0px 10px);
 		}
+
+		@include media(max-width 860px){
+
+			.comment-date{
+				@include position(relative, 0px auto 0px auto);
+				display: block;
+			}
+
+			.discussionTitles{
+				display: block;
+			}
+
+			.button-show-comments{
+				@include position(relative, 0px null null 100%);
+				@include margin(5px 0px 0px -43px);
+				display: block;
+			}
+		}
+
 	}
 
 	&:after{
@@ -342,6 +368,12 @@ button{
 	width: $size;
 	height: $h;
 	display: table-cell;
+
+	@include media(max-width 860px){
+		@include transform(scale(.85));
+		@include position(relative, 12px null null 0px);
+		@include margin(0px 0px 10px 0px);
+	}
 
 	.authorBubbleHolder{
 		width: $size;
@@ -376,6 +408,11 @@ button{
 	@include margin(0px 0px 0px -220px);
 	@include padding(null 10px null null);
 	text-align: right;
+
+	@include media(max-width 860px){
+		font-size: 14px;
+		@include margin(0px 0px 0px 0px);
+	}
 }
 
 .button-show-comments{
@@ -719,3 +756,7 @@ button{
 	}
 
 }
+
+
+
+
