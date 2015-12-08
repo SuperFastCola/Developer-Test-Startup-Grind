@@ -1,6 +1,6 @@
 @import "bourbon/bourbon";
 @import "neat/neat";
-@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,700,300);
+@import url(//fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,700,300);
 @include font-face("codropsicons", "/css/fonts/scodropsicons/codropsicons", $file-formats: eot woff2 woff);
 
 $magenta: #E25ABC;
@@ -21,6 +21,10 @@ $modular-scale-base: 12px;
   	font-size: modular-scale(1);
   	color: $bluegray;
   	// @include bdr;
+
+  	@include media(max-width 320px){
+  		font-size: 16px;
+  	}
 }
 
 *:focus {
@@ -28,14 +32,21 @@ $modular-scale-base: 12px;
 }
 
 body{
-	 -webkit-backface-visibility: hidden;
-	 -webkit-transform: translateZ(0);
+	-webkit-backface-visibility: hidden;
+	-webkit-transform: translateZ(0);
 	background-color: $bluegray;
+	@include margin(0px);
+	@include padding(0px);
 }
 
 header{
 	font-size: 40px;
 	@include margin(20px 0px 15px 0px);
+
+	@include media(max-width 320px){
+		font-size: 30px;
+		@include margin(10px 0px 15px 10px);
+	}
 }
 
 header,h1{
@@ -49,8 +60,22 @@ h1,h2{
 	line-height: 30px;
 }
 
+h2{
+	font-size: 24px;
+	line-height: 24px;	
+
+	@include media(max-width 860px){
+		font-size: 18px;
+		line-height: 18px;			
+	}
+}
+
 h1{
 	@include padding(10px null 5px null);
+	@include media(max-width 860px){
+		font-size: 24px;
+		line-height: 24px;	
+	}
 }
 
 button{
@@ -59,8 +84,44 @@ button{
 	@include bdr(0px);
 }
 
+#app{
+	width: 90%;
+	@include margin(0px auto);
+	@include padding(0px);
+
+	@include media(max-width 320px){
+		width: 100%;
+	}
+}
+
+
+@include keyframes(borderHeight) {
+  from {
+    border-top: 0px solid $darkgray;
+  }
+  to {
+   	border-top: 7px solid $darkgray;
+  }
+}
+
 .container{
-	@include outer-container(90%);
+	position: relative;
+	@include outer-container(100%);
+
+	@include media(min-width 320px){
+		@include outer-container(100%);
+	}
+
+	&:after{
+		content: '';
+		width: 100%;
+		@include position(absolute, 100% null null 0);
+		border-top: 0px solid $darkgray;
+
+		@include animation(borderHeight .75s linear 1s);
+		@include animation-fill-mode(forwards);
+		@include animation-iteration-count(1);	
+	}
 }
 
 .comment-area{
@@ -72,6 +133,10 @@ button{
 	background-color: #F1F1F2;
 
 	@include transition(all 1s);
+
+	@include media(max-width 320px){
+		@include padding($capadd 0px );
+	}
 	
 	&:before{
 		$bdrh: 12px;
@@ -80,13 +145,6 @@ button{
 		width: 100%;
 		@include position(absolute, (-($bdrh)) null null 0);
 		border-top: $bdrh solid $darkgray;
-	}
-
-	&:after{
-		content: '';
-		width: 100%;
-		@include position(absolute, 100% null null 0);
-		border-top: 7px solid $darkgray;
 	}
 
 }
@@ -138,8 +196,14 @@ button{
 	textarea{
 		width: 100%;
 		margin-bottom: 10px;
-		min-height: 100px;
+		min-height: 50px;
 		@include padding(10px);
+		@include bdr(1px, black);
+
+		&:focus{
+			outline: none;	
+		}
+		
 	}
 
 	.author-holder{
@@ -164,20 +228,34 @@ button{
 		.author-name-text-only{
 			color: $magenta;
 			font-weight: 700;
+			
+			@include media(max-width 320px){
+				font-size: 18px;
+			}
+
 		}
 
 		.author-holder{
 			top: -12px;
 			width: 50%;
+
 		}
 
 		.comment-date{
 			display: table-cell;
+			text-align: right;
 			width: 50%;
 			color: $magenta;
 			@include padding(0);
 			@include position(relative, 0px null null 0px);
 			@include margin(0px 0px 10px 0px);
+
+			@include media(max-width 440px){
+				display: block;
+				text-align: left;
+				width: 100%;
+			}
+
 		}
 	}
 
@@ -189,7 +267,8 @@ button{
 		display: table;
 		width: 100%;
 		@include padding(0px 0px 0px 0px);
-		
+
+
 		p{
 			@include margin(0px null 10px null);
 		}
@@ -258,7 +337,6 @@ button{
 
 			}
 			
-
 			.button-show-comments{
 				top: 0px;
 				margin-top: 0px;
@@ -306,8 +384,12 @@ button{
 		@include animation-iteration-count(1);		
 	}
 
-	&.comment-holder{
+	.comment-holder{
 		@include margin(0px 0px 10px 0px);
+
+		@include media(max-width 440px){
+			@include padding(0px 0px 0px 0px);
+		}
 	}
 }
 
@@ -329,25 +411,12 @@ button{
 		.discussionTitles{
 			display: table-cell;
 			@include padding(0px 0px 0px 10px);
-		}
 
-		@include media(max-width 860px){
-
-			.comment-date{
-				@include position(relative, 0px auto 0px auto);
-				display: block;
+			@include media(max-width 860px){
+				@include padding(14px 10px 10px 0px);
 			}
+		}	
 
-			.discussionTitles{
-				display: block;
-			}
-
-			.button-show-comments{
-				@include position(relative, 0px null null 100%);
-				@include margin(5px 0px 0px -43px);
-				display: block;
-			}
-		}
 
 	}
 
@@ -412,6 +481,10 @@ button{
 	@include media(max-width 860px){
 		font-size: 14px;
 		@include margin(0px 0px 0px 0px);
+		@include position(relative, 0% null null 0%);
+		min-width: 100%;
+		@include padding(10px 10px null 10px);
+		text-align: left;
 	}
 }
 
@@ -429,6 +502,14 @@ button{
 	width: $size;
 	height: $size;
 	overflow: hidden;
+
+	@include media(max-width 860px){
+		@include position(absolute, -25px null null 100%);
+		@include margin( 0 null null (-($size + $scaleAdjust)));
+		display: block;
+		clear: both;
+
+	}
 
 	span{
 		$w: $spanwidth;
@@ -451,6 +532,10 @@ button{
 		text-align: right;
 
 		@include transition(clip .25s);
+
+		@include media(max-width 400px){
+			display: none;
+		}
 	}
 
 	.showIcon1Holder{

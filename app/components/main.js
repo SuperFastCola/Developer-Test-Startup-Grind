@@ -1,10 +1,9 @@
 // main.js
 var $ = require("jquery");
 var React = require('react');
-var Animate = require('animateCSS');
 var ReactDOM = require('react-dom');
 var marked = require('marked');
-var css = require("stylesSheet");
+require("stylesSheet");
 
 //render author profile
 var Author = React.createClass({
@@ -20,6 +19,7 @@ var Author = React.createClass({
 	}
 });
 
+//confirm button icon 
 var ConfirmIcon = React.createClass({
 	render: function(){
 		return (
@@ -30,6 +30,7 @@ var ConfirmIcon = React.createClass({
 	}
 });
 
+//deny button icon 
 var DenyIcon = React.createClass({
 	render: function(){
 		return (
@@ -141,7 +142,8 @@ var Comment = React.createClass({
 			hasReplies: false,
 			commentID: null,
 			showReplies: false,
-			authorLoggedIn: false 
+			authorLoggedIn: false,
+			commentHeightStyle: {}
 		};
 	},
 	parseMarkup: function(item) {
@@ -254,16 +256,26 @@ var Comment = React.createClass({
 			</div>
 		);
   	},
+  	getCommentSize: function(obj){ 
+ 		this.setState({
+ 			commentHeightStyle:{
+ 				height: String($(obj).height()) + "px"
+ 			}
+  		});
+  	},
+  	setTextAreaFocus: function(obj){
+  		$(obj).focus();
+  	},
 	render: function(){		
 
 		if(this.state.confirmDelete){
 			var confirmer = <ConfirmationDelete onDelete={this.props.onDelete} toggleConfirm={this.toggleConfirm} data={this.props.data} />;
 		}
 
-		var commentBody = <div className="comment-body" dangerouslySetInnerHTML={this.parseMarkup(this.state.commentBody)} />;
+		var commentBody = <div className="comment-body" ref={this.getCommentSize} dangerouslySetInnerHTML={this.parseMarkup(this.state.commentBody)} />;
 
 		if(this.state.editingComment){
-			commentBody = <textarea className="comment-body-edit" value={this.state.commentBody} onChange={this.handleEditComment} />
+			commentBody = <textarea className="comment-body-edit" ref={this.setTextAreaFocus} style={this.state.commentHeightStyle} value={this.state.commentBody} onChange={this.handleEditComment} />
 		}
 
 		var commentActionarea = null;
@@ -405,6 +417,7 @@ var Discussion = React.createClass({
 		var data = this.state.comments.slice();
 		var edited = false;
 
+		//search through parents and children for matching comment id
 		while(!edited){
 			data.map(function(d){
 				if(d.id===id){
@@ -433,6 +446,8 @@ var Discussion = React.createClass({
 		var removed = false;
 		var index = 0;
 
+		//search through parents and children for matching comment id
+
 		data.map(function(d){
 			if(d.id==id){
 				data.splice(index,1);
@@ -446,13 +461,14 @@ var Discussion = React.createClass({
 	handleRemoveElements: function(obj){
 		var dataProcessed = false;
 
-		//superficial array search
+		//superficial array search through parents
 		dataProcessed = this.findCommentToDelete(obj.id,this.state.comments);	
 		
 		if(dataProcessed){
 			this.setState({comments:dataProcessed});
 			return;
 		}else{
+			//deeper search through child comments.
 			var getChildComments = this.state.comments.slice();			
 			for(var i in getChildComments){
 				if(typeof getChildComments[i].comments != "undefined"){
@@ -489,11 +505,12 @@ var Discussion = React.createClass({
 	},
 	render: function(){
 
+		//comment delete and edit functions are passed to children to edit comments in discussion state
 		return (
 	        <section className="discussion">
+	        	<CommentDate datetime={this.props.topic.datetime} />
 	        	<div className="discussionHeader">
 		        	<Author data={this.props.topic} /> 
-		        	<CommentDate datetime={this.props.topic.datetime} />
 		        	<div className="discussionTitles">
 		        		<h1 className="discussion-title">{this.props.topic.title}</h1>
 		        		<h2 className="discussion-subtitle">{this.props.topic.discussion}</h2>
@@ -544,4 +561,5 @@ var Main = React.createClass({
 	}
 });
 
+//pass in logged in author id
 ReactDOM.render(<Main loggedInID={2} />,document.getElementById('app'));
